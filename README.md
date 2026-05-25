@@ -2,6 +2,19 @@
 
 GST-compliant accounting and business management application for Indian SMBs.
 
+**FinNBiz** is a comprehensive **GST-compliant accounting and business management application** designed specifically for Indian SMBs (Small and Medium Businesses).
+
+## What It Does
+
+FinNBiz provides end-to-end financial management with features including:
+- **Multi-company tenancy** support
+- **GST-compliant invoicing** (CGST/SGST/IGST calculations)
+- **Email + OTP authentication**
+- **PDF invoice generation**
+- **CSV import/export** capabilities
+- **Bank reconciliation**
+- **GST return exports**
+
 ## Tech Stack
 
 - **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS + PWA
@@ -9,15 +22,12 @@ GST-compliant accounting and business management application for Indian SMBs.
 - **Worker**: Node.js + BullMQ + Redis
 - **Deployment**: Netlify (frontend + serverless functions)
 
-## Features
+## Key Features
 
-- Multi-company tenancy
-- GST-compliant invoicing (CGST/SGST/IGST calculation)
-- Email + OTP authentication
-- PDF invoice generation
-- CSV import/export
-- Bank reconciliation
-- GST return exports
+- Multi-platform: Web (PWA), Desktop (Electron), Mobile (Capacitor/Android support)
+- Enterprise-ready: Email notifications, file uploads (AWS S3), background job processing
+- Developer-friendly: pnpm workspaces, Turbo for monorepo management, TypeScript strict mode
+- Language Composition: 74.5% TypeScript, 21.3% JavaScript, 4.2% CSS
 
 ## Local Development Setup
 
@@ -30,53 +40,53 @@ GST-compliant accounting and business management application for Indian SMBs.
 ### Quick Start
 
 1. **Clone and install dependencies**
-   ```bash
-   git clone <repository-url>
-   cd finnbiz
-   pnpm install
-   ```
+    ```bash
+    git clone <repository-url>
+    cd finnbiz
+    pnpm install
+    ```
 
 2. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your local database credentials
-   ```
+    ```bash
+    cp .env.example .env
+    # Edit .env with your local database credentials
+    ```
 
 3. **Start development infrastructure**
-   ```bash
-   # Start PostgreSQL, Redis, and Minio
-   docker compose -f infra/docker-compose.dev.yml up --build -d
-   ```
+    ```bash
+    # Start PostgreSQL, Redis, and Minio
+    docker compose -f infra/docker-compose.dev.yml up --build -d
+    ```
 
 4. **Set up database**
-   ```bash
-   # Generate Prisma client
-   pnpm db:generate
+    ```bash
+    # Generate Prisma client
+    pnpm db:generate
 
-   # Run migrations
-   pnpm db:push
+    # Run migrations
+    pnpm db:push
 
-   # (Optional) Seed database
-   pnpm db:seed
-   ```
+    # (Optional) Seed database
+    pnpm db:seed
+    ```
 
 5. **Start development servers**
-   ```bash
-   # Terminal 1: Start API server
-   pnpm -C apps/api dev
+    ```bash
+    # Terminal 1: Start API server
+    pnpm -C apps/api dev
 
-   # Terminal 2: Start worker
-   pnpm -C apps/worker dev
+    # Terminal 2: Start worker
+    pnpm -C apps/worker dev
 
-   # Terminal 3: Start frontend
-   pnpm -C apps/web dev
-   ```
+    # Terminal 3: Start frontend
+    pnpm -C apps/web dev
+    ```
 
 6. **Access the application**
-   - Frontend: http://localhost:3000
-   - API: http://localhost:3001
-   - API Health: http://localhost:3001/health
-   - Database Studio: `pnpm db:studio`
+    - Frontend: http://localhost:3000
+    - API: http://localhost:3001
+    - API Health: http://localhost:3001/health
+    - Database Studio: `pnpm db:studio`
 
 ### Available Scripts
 
@@ -108,7 +118,8 @@ finnbiz/
 ├── apps/
 │   ├── web/           # Next.js frontend
 │   ├── api/           # Express.js backend
-│   └── worker/        # Background job processor
+│   ├── worker/        # Background job processor
+│   └── desktop/       # Electron desktop application
 ├── packages/
 │   ├── shared/        # Shared types and utilities
 │   ├── ui/            # Reusable UI components
@@ -147,9 +158,9 @@ finnbiz/
 
 1. **Connect repository** to Netlify
 2. **Set build settings**:
-   - Build command: `pnpm build`
-   - Publish directory: `apps/web/.next`
-   - Functions directory: `apps/web/netlify/functions`
+    - Build command: `pnpm build`
+    - Publish directory: `apps/web/.next`
+    - Functions directory: `apps/web/netlify/functions`
 3. **Set environment variables** in Netlify dashboard
 4. **Deploy**: Automatic on push to main branch
 
