@@ -284,7 +284,7 @@ router.get('/users', (0, auth_1.requireCompanyAccess)(['admin.roles.view']), asy
                 }
             }
         });
-        const users = memberships.map(membership => ({
+        const users = memberships.map((membership) => ({
             id: membership.user.id,
             email: membership.user.email,
             name: membership.user.name,
@@ -293,7 +293,7 @@ router.get('/users', (0, auth_1.requireCompanyAccess)(['admin.roles.view']), asy
                 id: membership.role.id,
                 name: membership.role.name,
                 description: membership.role.description,
-                permissions: membership.role.permissions.map(rp => rp.permission)
+                permissions: membership.role.permissions.map((rp) => rp.permission)
             },
             joinedAt: membership.createdAt
         }));

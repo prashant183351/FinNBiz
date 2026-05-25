@@ -159,7 +159,7 @@ export class InventoryService {
 
     // Calculate current stock for each product
     const productsWithStock = await Promise.all(
-      products.map(async (product) => {
+      products.map(async (product: any) => {
         const currentStock = await this.getCurrentStock(product.id)
         const lowStock = product.minStock && currentStock <= product.minStock
 
@@ -232,7 +232,7 @@ export class InventoryService {
       orderBy: { createdAt: 'asc' }
     })
 
-    return movements.reduce((stock, movement) => {
+    return movements.reduce((stock: number, movement: any) => {
       switch (movement.type) {
         case 'in':
           return stock + movement.quantity
@@ -286,16 +286,20 @@ export class InventoryService {
     vendorData: VendorData,
     createdBy: string
   ): Promise<any> {
-    const vendor = await prisma.vendor.upsert({
+    // Check if vendor already exists (find by companyId + name)
+    const existingVendor = await prisma.vendor.findFirst({
       where: {
-        companyId_name: {
-          companyId: vendorData.companyId,
-          name: vendorData.name
-        }
-      },
-      update: vendorData,
-      create: vendorData
+        companyId: vendorData.companyId,
+        name: vendorData.name
+      }
     })
+
+    const vendor = existingVendor
+      ? await prisma.vendor.update({
+          where: { id: existingVendor.id },
+          data: vendorData
+        })
+      : await prisma.vendor.create({ data: vendorData })
 
     // Log audit event
     await AuditService.log({

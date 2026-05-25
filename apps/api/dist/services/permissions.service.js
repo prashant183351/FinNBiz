@@ -158,8 +158,8 @@ class PermissionsService {
                     });
                 }
                 catch (error) {
-                    // Ignore if already exists
-                    if (!error.code === 'P2002') {
+                    // Ignore if already exists (P2002 unique constraint)
+                    if (error?.code !== 'P2002') {
                         throw error;
                     }
                 }
@@ -188,7 +188,7 @@ class PermissionsService {
         });
         if (!membership)
             return false;
-        return membership.role.permissions.some(rp => rp.permission.name === permission);
+        return membership.role.permissions.some((rp) => rp.permission.name === permission);
     }
     /**
      * Check if user has any of the specified permissions
@@ -234,7 +234,7 @@ class PermissionsService {
         });
         if (!membership)
             return [];
-        return membership.role.permissions.map(rp => rp.permission.name);
+        return membership.role.permissions.map((rp) => rp.permission.name);
     }
     /**
      * Get role with permissions
@@ -256,7 +256,13 @@ class PermissionsService {
             id: role.id,
             name: role.name,
             description: role.description || undefined,
-            permissions: role.permissions.map(rp => rp.permission)
+            permissions: role.permissions.map((rp) => ({
+                id: rp.permission.id,
+                name: rp.permission.name,
+                description: rp.permission.description ?? undefined,
+                module: rp.permission.module,
+                action: rp.permission.action
+            }))
         };
     }
     /**
@@ -291,12 +297,19 @@ class PermissionsService {
      * Get all available permissions
      */
     static async getAllPermissions() {
-        return prisma.permission.findMany({
+        const perms = await prisma.permission.findMany({
             orderBy: [
                 { module: 'asc' },
                 { action: 'asc' }
             ]
         });
+        return perms.map((p) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description ?? undefined,
+            module: p.module,
+            action: p.action
+        }));
     }
     /**
      * Get all roles with their permissions
@@ -312,11 +325,17 @@ class PermissionsService {
             },
             orderBy: { name: 'asc' }
         });
-        return roles.map(role => ({
+        return roles.map((role) => ({
             id: role.id,
             name: role.name,
             description: role.description || undefined,
-            permissions: role.permissions.map(rp => rp.permission)
+            permissions: role.permissions.map((rp) => ({
+                id: rp.permission.id,
+                name: rp.permission.name,
+                description: rp.permission.description ?? undefined,
+                module: rp.permission.module,
+                action: rp.permission.action
+            }))
         }));
     }
     /**

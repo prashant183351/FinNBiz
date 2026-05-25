@@ -5,7 +5,7 @@ import { FinancialService } from '../services/financial.service'
 
 const router: Router = Router()
 const redis = createRedisClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' })
-const reportQueue = new Queue('report-calculations', { connection: redis })
+const reportQueue = new Queue('report-calculations', { connection: redis as any })
 
 // GET /api/reports/profit-loss - Get Profit & Loss statement
 router.get('/profit-loss', async (req, res) => {
@@ -167,7 +167,7 @@ router.get('/top-expenses', async (req, res) => {
       take: parseInt(limit as string),
     })
 
-    const result = topExpenses.map(expense => ({
+    const result = topExpenses.map((expense: any) => ({
       category: expense.account,
       amount: expense._sum.debit || 0,
     }))
@@ -176,6 +176,299 @@ router.get('/top-expenses', async (req, res) => {
   } catch (error) {
     console.error('Error fetching top expenses:', error)
     res.status(500).json({ error: 'Failed to fetch top expenses' })
+  }
+})
+
+// GET /api/reports/gst-tds-summary - Get GST and TDS tax summaries
+router.get('/gst-tds-summary', async (req, res) => {
+  try {
+    const { companyId, startDate, endDate } = req.query
+
+    if (!companyId || typeof companyId !== 'string') {
+      return res.status(400).json({ error: 'Company ID is required' })
+    }
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'Start date and end date are required' })
+    }
+
+    const { PrismaClient } = await import('@prisma/client')
+    const prisma = new PrismaClient()
+
+    const start = new Date(startDate as string)
+    const end = new Date(endDate as string)
+
+    // 1. Calculate GST Output: Sum of totalGST from finalized/paid invoices
+    const gstOutputSum = await prisma.invoice.aggregate({
+      _sum: { totalGST: true },
+      where: {
+        companyId,
+        status: { in: ['finalized', 'paid'] },
+        createdAt: { gte: start, lte: end }
+      }
+    })
+
+    // 2. Calculate GST Input: Sum of gstAmount from expenses
+    const gstInputSum = await prisma.expense.aggregate({
+      _sum: { gstAmount: true },
+      where: {
+        companyId,
+        date: { gte: start, lte: end }
+      }
+    })
+
+    // 3. Calculate TDS Liability: Sum of payroll tds deductions for company employees
+    const employees = await prisma.employee.findMany({
+      where: { companyId },
+      select: { id: true }
+    })
+    const employeeIds = employees.map((emp: any) => emp.id)
+
+    let totalTds = 0
+    if (employeeIds.length > 0) {
+      const tdsSum = await prisma.payroll.aggregate({
+        _sum: { tds: true },
+        where: {
+          employeeId: { in: employeeIds },
+          createdAt: { gte: start, lte: end }
+        }
+      })
+      totalTds = tdsSum._sum.tds || 0
+    }
+
+    const gstOutput = gstOutputSum._sum.totalGST || 0
+    const gstInput = gstInputSum._sum.gstAmount || 0
+    const netGstPayable = Math.max(0, gstOutput - gstInput)
+
+    res.json({
+      gstOutput,
+      gstInput,
+      netGstPayable,
+      totalTds,
+      period: { startDate: start, endDate: end }
+    })
+  } catch (error: any) {
+    console.error('Error generating GST/TDS tax summary:', error)
+    res.status(500).json({ error: 'Failed to generate GST/TDS tax summary' })
+  }
+})
+
+// GET /api/reports/gstr1 - Get GSTR-1 Filing Data
+router.get('/gstr1', async (req, res) => {
+  try {
+    const { companyId, month, year } = req.query
+
+    if (!companyId || typeof companyId !== 'string') {
+      return res.status(400).json({ error: 'Company ID is required' })
+    }
+
+    if (!month || !year) {
+      return res.status(400).json({ error: 'Month and year are required' })
+    }
+
+    const { PrismaClient } = await import('@prisma/client')
+    const prisma = new PrismaClient()
+
+    const m = parseInt(month as string)
+    const y = parseInt(year as string)
+    
+    // First day of month
+    const startDate = new Date(y, m - 1, 1)
+    // First day of next month
+    const endDate = new Date(y, m, 1)
+
+    // Fetch all finalized/paid invoices for the month
+    const invoices = await prisma.invoice.findMany({
+      where: {
+        companyId,
+        status: { in: ['finalized', 'paid'] },
+        createdAt: {
+          gte: startDate,
+          lt: endDate
+        }
+      },
+      include: {
+        items: true
+      }
+    })
+
+    const b2b: any[] = []
+    const b2cs: any[] = []
+    const hsnMap = new Map<string, any>()
+    let totalTaxableValue = 0
+    let totalIGST = 0
+    let totalCGST = 0
+    let totalSGST = 0
+
+    for (const inv of invoices) {
+      const isB2B = Boolean(inv.customerGSTIN && inv.customerGSTIN.trim().length > 0)
+      let invTaxable = 0
+      let invIgst = 0
+      let invCgst = 0
+      let invSgst = 0
+
+      for (const item of inv.items) {
+        invTaxable += item.amount
+        invIgst += item.igst
+        invCgst += item.cgst
+        invSgst += item.sgst
+
+        // HSN Summary logic
+        const hsn = item.hsnCode || 'OTHER'
+        if (!hsnMap.has(hsn)) {
+          hsnMap.set(hsn, { hsn, desc: item.description, qty: 0, val: 0, txval: 0, igst: 0, cgst: 0, sgst: 0 })
+        }
+        const hEntry = hsnMap.get(hsn)
+        hEntry.qty += item.quantity
+        hEntry.txval += item.amount
+        hEntry.val += (item.amount + item.igst + item.cgst + item.sgst)
+        hEntry.igst += item.igst
+        hEntry.cgst += item.cgst
+        hEntry.sgst += item.sgst
+      }
+
+      totalTaxableValue += invTaxable
+      totalIGST += invIgst
+      totalCGST += invCgst
+      totalSGST += invSgst
+
+      const formattedInv = {
+        invNo: inv.invoiceNumber,
+        invDate: inv.createdAt.toISOString().split('T')[0],
+        val: inv.totalAmount,
+        txval: invTaxable,
+        igst: invIgst,
+        cgst: invCgst,
+        sgst: invSgst,
+        gstin: inv.customerGSTIN,
+        customerName: inv.customerName
+      }
+
+      if (isB2B) {
+        b2b.push(formattedInv)
+      } else {
+        b2cs.push(formattedInv)
+      }
+    }
+
+    res.json({
+      period: { month: m, year: y },
+      summary: {
+        totalTaxableValue,
+        totalIGST,
+        totalCGST,
+        totalSGST,
+        totalInvoices: invoices.length
+      },
+      b2b,
+      b2cs,
+      hsn: Array.from(hsnMap.values())
+    })
+
+  } catch (error: any) {
+    console.error('Error generating GSTR-1 data:', error)
+    res.status(500).json({ error: 'Failed to generate GSTR-1 data' })
+  }
+})
+
+// GET /api/reports/gstr3b - Get GSTR-3B Filing Summary
+router.get('/gstr3b', async (req, res) => {
+  try {
+    const { companyId, month, year } = req.query
+
+    if (!companyId || typeof companyId !== 'string') {
+      return res.status(400).json({ error: 'Company ID is required' })
+    }
+    if (!month || !year) {
+      return res.status(400).json({ error: 'Month and year are required' })
+    }
+
+    const { PrismaClient } = await import('@prisma/client')
+    const prisma = new PrismaClient()
+
+    const m = parseInt(month as string)
+    const y = parseInt(year as string)
+    
+    const startDate = new Date(y, m - 1, 1)
+    const endDate = new Date(y, m, 1)
+
+    // 1. Table 3.1: Outward Supplies (Output Tax from Invoices)
+    const invoices = await prisma.invoice.findMany({
+      where: {
+        companyId,
+        status: { in: ['finalized', 'paid'] },
+        createdAt: { gte: startDate, lt: endDate }
+      },
+      include: { items: true }
+    })
+
+    let outTaxable = 0
+    let outIgst = 0
+    let outCgst = 0
+    let outSgst = 0
+
+    for (const inv of invoices) {
+      for (const item of inv.items) {
+        outTaxable += item.amount
+        outIgst += item.igst
+        outCgst += item.cgst
+        outSgst += item.sgst
+      }
+    }
+
+    // 2. Table 4: Eligible ITC (Input Tax from Expenses)
+    // We assume expenses have gstAmount which is split evenly between CGST/SGST if local, or IGST if interstate.
+    // For simplicity in this demo, we'll assume it's CGST/SGST if IGST = 0 (which we don't track on Expense natively yet, so we'll just put it into CGST/SGST half and half).
+    // Let's check Expense model: amount, gstAmount, totalAmount.
+    const expenses = await prisma.expense.findMany({
+      where: {
+        companyId,
+        date: { gte: startDate, lt: endDate }
+      }
+    })
+
+    let itcEligible = 0
+    for (const exp of expenses) {
+      itcEligible += exp.gstAmount
+    }
+
+    // Allocate ITC (Assume 50% CGST, 50% SGST for demo purposes, as real system needs vendor GSTIN state match)
+    const inCgst = itcEligible / 2
+    const inSgst = itcEligible / 2
+    const inIgst = 0
+
+    // 3. Payment of Tax
+    const netIgst = Math.max(0, outIgst - inIgst)
+    const netCgst = Math.max(0, outCgst - inCgst)
+    const netSgst = Math.max(0, outSgst - inSgst)
+
+    res.json({
+      period: { month: m, year: y },
+      table3: {
+        outwardTaxable: outTaxable,
+        outwardIgst: outIgst,
+        outwardCgst: outCgst,
+        outwardSgst: outSgst
+      },
+      table4: {
+        itcEligible,
+        itcIgst: inIgst,
+        itcCgst: inCgst,
+        itcSgst: inSgst,
+        itcReversed: 0,
+        netItcAvailable: itcEligible
+      },
+      payment: {
+        payableIgst: netIgst,
+        payableCgst: netCgst,
+        payableSgst: netSgst,
+        totalPayable: netIgst + netCgst + netSgst
+      }
+    })
+
+  } catch (error: any) {
+    console.error('Error generating GSTR-3B data:', error)
+    res.status(500).json({ error: 'Failed to generate GSTR-3B data' })
   }
 })
 

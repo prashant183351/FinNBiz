@@ -38,7 +38,7 @@ export declare class FinancialService {
             vendor: string | null;
             date: Date;
             source: string;
-            metadata: import("@prisma/client/runtime/library").JsonValue | null;
+            metadata: string | null;
             createdAt: Date;
             updatedAt: Date;
             companyId: string;

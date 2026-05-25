@@ -1,0 +1,19 @@
+{
+  "appId": "com.finnbiz.app",
+  "appName": "FinNBiz",
+  "webDir": "out",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "backgroundColor": "#000000",
+      "showSpinner": true,
+      "androidSpinnerStyle": "large",
+      "iosSpinnerStyle": "small",
+      "spinnerColor": "#8dc63f",
+      "splashFullScreen": true,
+      "splashImmersive": true
+    }
+  }
+}

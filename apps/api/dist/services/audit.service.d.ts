@@ -47,7 +47,7 @@ export declare class AuditService {
             action: string;
             resource: string;
             resourceId: string | null;
-            details: import("@prisma/client/runtime/library").JsonValue | null;
+            details: string | null;
             ipAddress: string | null;
             userAgent: string | null;
             success: boolean;
@@ -110,7 +110,7 @@ export declare class AuditService {
         action: string;
         resource: string;
         resourceId: string | null;
-        details: import("@prisma/client/runtime/library").JsonValue | null;
+        details: string | null;
         ipAddress: string | null;
         userAgent: string | null;
         success: boolean;

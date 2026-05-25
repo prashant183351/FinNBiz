@@ -1,38 +1,60 @@
 
-
-> @finnbiz/web@0.1.0 build /home/near/Desktop/FinBiz/apps/web
+> @finnbiz/web@0.1.0 build C:\Users\Admin\FinNBiz\apps\web
 > next build
 
- [33m[1m⚠[22m[39m Invalid next.config.js options detected: 
- [33m[1m⚠[22m[39m     Unrecognized key(s) in object: 'appDir' at "experimental"
- [33m[1m⚠[22m[39m See more info here: https://nextjs.org/docs/messages/invalid-next-config
-  [1m[38;2;173;127;168m▲ Next.js 14.2.33[39m[22m
+  ▲ Next.js 14.2.33
 
- [37m[1m [22m[39m Creating an optimized production build ...
- [32m[1m✓[22m[39m Compiled successfully
-[?25l [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[1A[2K[1G[?25h [37m[1m [22m[39m Linting and checking validity of types     [32m[1m✓[22m[39m Linting and checking validity of types 
-[?25l [37m[1m [22m[39m Collecting page data  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting page data  [36m..[39m[2K[1G[?25h [37m[1m [22m[39m Collecting page data     [32m[1m✓[22m[39m Collecting page data 
-[?25l [37m[1m [22m[39m Generating static pages (0/4)  [36m[    ][39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Generating static pages (0/4)  [36m[=   ][39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Generating static pages (0/4)  [36m[==  ][39m ⚠ Unsupported metadata themeColor is configured in metadata export in /. Please move it to viewport export instead.
-Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
- ⚠ Unsupported metadata themeColor is configured in metadata export in /_not-found. Please move it to viewport export instead.
-Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
- ⚠ Unsupported metadata themeColor is configured in metadata export in /_not-found. Please move it to viewport export instead.
-Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
- ⚠ Unsupported metadata themeColor is configured in metadata export in /. Please move it to viewport export instead.
-Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
-[2K[1G[1A[2K[1G [37m[1m [22m[39m Generating static pages (3/4)  [36m[=== ][39m[2K[1G[1A[2K[1G[?25h [32m[1m✓[22m[39m Generating static pages (4/4)
-[?25l [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[?25l [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G[?25h [37m[1m [22m[39m Collecting build traces     [32m[1m✓[22m[39m Collecting build traces 
-[2K[1G[?25h [37m[1m [22m[39m Finalizing page optimization     [32m[1m✓[22m[39m Finalizing page optimization 
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/28) ...
+   Generating static pages (7/28) 
+   Generating static pages (14/28) 
+   Generating static pages (21/28) 
+ ✓ Generating static pages (28/28)
+   Finalizing page optimization ...
+   Collecting build traces ...
 
-[4mRoute (app)[24m                              [4mSize[24m     [4mFirst Load JS[24m
-┌ ○ /                                    138 B          [37m[1m87.3 kB[22m[39m
-└ ○ /_not-found                          871 B          [37m[1m88.1 kB[22m[39m
-+ First Load JS shared by all            [37m[1m87.2 kB[22m[39m
-  ├ chunks/1489ca71-ce5a69f6e1e57506.js  53.6 kB
-  ├ chunks/899-5d0e76dcf04bbf12.js       31.7 kB
-  └ other shared chunks (total)          1.86 kB
+Route (app)                              Size     First Load JS
+┌ ○ /                                    175 B          96.2 kB
+├ ○ /_not-found                          871 B          88.2 kB
+├ ○ /company-setup                       8.29 kB        95.6 kB
+├ ○ /dashboard                           9.32 kB         105 kB
+├ ○ /dashboard/expenses                  6.09 kB         110 kB
+├ ○ /dashboard/hr                        3.14 kB        99.1 kB
+├ ○ /dashboard/hr/employees              3.19 kB        99.2 kB
+├ ○ /dashboard/hr/payroll                3.47 kB        99.4 kB
+├ ○ /dashboard/hr/payslip                3.42 kB         103 kB
+├ ○ /dashboard/inventory                 10 kB           117 kB
+├ ○ /dashboard/invoices                  3.97 kB         108 kB
+├ ○ /dashboard/invoices/new              5.9 kB          110 kB
+├ ○ /dashboard/invoices/view             8.13 kB         115 kB
+├ ○ /dashboard/journal                   3.7 kB          108 kB
+├ ○ /dashboard/purchases/bills           8.28 kB        95.6 kB
+├ ○ /dashboard/purchases/tds             7.03 kB        94.3 kB
+├ ○ /dashboard/purchases/vendors         7.36 kB        94.7 kB
+├ ○ /dashboard/reports                   9.41 kB         109 kB
+├ ○ /dashboard/reports/gstr1             3.82 kB        99.8 kB
+├ ○ /dashboard/reports/gstr3b            3.65 kB         103 kB
+├ ○ /dashboard/settings/audit            6.9 kB         94.2 kB
+├ ○ /dashboard/settings/profile          7.05 kB        94.3 kB
+├ ○ /dashboard/settings/users            7.74 kB          95 kB
+├ ○ /dashboard/upi                       3.95 kB         108 kB
+├ ○ /login                               7.97 kB         104 kB
+└ ○ /register                            7.93 kB         104 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/1489ca71-b5f4843bddafdfb4.js  53.6 kB
+  ├ chunks/899-1070b9ab6fa0380c.js       31.7 kB
+  └ other shared chunks (total)          1.96 kB
 
 
 ○  (Static)  prerendered as static content
 
-[?25h

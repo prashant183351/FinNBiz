@@ -23,7 +23,8 @@ export class ReportCalculator {
       'report-calculations',
       this.processJob,
       {
-        connection: redis,
+        // @ts-ignore
+        connection: { url: process.env.REDIS_URL || 'redis://localhost:6379' } as any,
         concurrency: 5, // Process up to 5 reports simultaneously
       }
     )
@@ -33,7 +34,11 @@ export class ReportCalculator {
     })
 
     this.worker.on('failed', (job, err) => {
-      console.error(`Report calculation failed: ${job?.id}`, err)
+      if (job) {
+        console.error(`Report calculation failed: ${job.id}`, err)
+      } else {
+        console.error(`Unknown report calculation failed`, err)
+      }
     })
 
     console.log('📊 Report Calculator Worker started')
@@ -154,20 +159,20 @@ export class ReportCalculator {
       _sum: { debit: true, credit: true },
     })
 
-    const totalAssets = assets.reduce((sum, asset) => sum + (asset._sum.debit || 0) - (asset._sum.credit || 0), 0)
-    const totalLiabilities = liabilities.reduce((sum, liability) => sum + (liability._sum.credit || 0) - (liability._sum.debit || 0), 0)
-    const totalEquity = equity.reduce((sum, eq) => sum + (eq._sum.credit || 0) - (eq._sum.debit || 0), 0)
+    const totalAssets = assets.reduce((sum: number, asset: any) => sum + (asset._sum.debit || 0) - (asset._sum.credit || 0), 0)
+    const totalLiabilities = liabilities.reduce((sum: number, liability: any) => sum + (liability._sum.credit || 0) - (liability._sum.debit || 0), 0)
+    const totalEquity = equity.reduce((sum: number, eq: any) => sum + (eq._sum.credit || 0) - (eq._sum.debit || 0), 0)
 
     return {
-      assets: assets.map(asset => ({
+      assets: assets.map((asset: any) => ({
         account: asset.account,
         balance: (asset._sum.debit || 0) - (asset._sum.credit || 0),
       })),
-      liabilities: liabilities.map(liability => ({
+      liabilities: liabilities.map((liability: any) => ({
         account: liability.account,
         balance: (liability._sum.credit || 0) - (liability._sum.debit || 0),
       })),
-      equity: equity.map(eq => ({
+      equity: equity.map((eq: any) => ({
         account: eq.account,
         balance: (eq._sum.credit || 0) - (eq._sum.debit || 0),
       })),

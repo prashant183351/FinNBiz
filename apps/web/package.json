@@ -5,12 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:mobile": "npx cross-env MOBILE_BUILD=true next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate-assets": "capacitor-assets generate"
   },
   "dependencies": {
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
     "@finnbiz/shared": "workspace:*",
     "@finnbiz/ui": "workspace:*",
     "next": "^14.0.0",
@@ -18,10 +22,12 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@types/node": "^20.19.24",
     "@types/react": "^18.3.26",
     "@types/react-dom": "^18.3.7",
     "autoprefixer": "^10.4.16",
+    "cross-env": "^10.1.0",
     "eslint": "^8.55.0",
     "eslint-config-custom": "workspace:*",
     "postcss": "^8.4.32",

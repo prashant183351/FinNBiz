@@ -190,9 +190,9 @@ export class PermissionsService {
               permissionId: permission.id
             }
           })
-        } catch (error) {
-          // Ignore if already exists
-          if (!error.code === 'P2002') {
+        } catch (error: any) {
+          // Ignore if already exists (P2002 unique constraint)
+          if (error?.code !== 'P2002') {
             throw error
           }
         }
@@ -223,7 +223,7 @@ export class PermissionsService {
 
     if (!membership) return false
 
-    return membership.role.permissions.some(rp => rp.permission.name === permission)
+    return membership.role.permissions.some((rp: any) => rp.permission.name === permission)
   }
 
   /**
@@ -273,7 +273,7 @@ export class PermissionsService {
 
     if (!membership) return []
 
-    return membership.role.permissions.map(rp => rp.permission.name)
+    return membership.role.permissions.map((rp: any) => rp.permission.name)
   }
 
   /**
@@ -297,7 +297,13 @@ export class PermissionsService {
       id: role.id,
       name: role.name,
       description: role.description || undefined,
-      permissions: role.permissions.map(rp => rp.permission)
+      permissions: role.permissions.map((rp: any) => ({
+        id: rp.permission.id,
+        name: rp.permission.name,
+        description: rp.permission.description ?? undefined,
+        module: rp.permission.module,
+        action: rp.permission.action
+      }))
     }
   }
 
@@ -341,12 +347,19 @@ export class PermissionsService {
    * Get all available permissions
    */
   static async getAllPermissions(): Promise<Permission[]> {
-    return prisma.permission.findMany({
+    const perms = await prisma.permission.findMany({
       orderBy: [
         { module: 'asc' },
         { action: 'asc' }
       ]
     })
+    return perms.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description ?? undefined,
+      module: p.module,
+      action: p.action
+    }))
   }
 
   /**
@@ -364,11 +377,17 @@ export class PermissionsService {
       orderBy: { name: 'asc' }
     })
 
-    return roles.map(role => ({
+    return roles.map((role: any) => ({
       id: role.id,
       name: role.name,
       description: role.description || undefined,
-      permissions: role.permissions.map(rp => rp.permission)
+      permissions: role.permissions.map((rp: any) => ({
+        id: rp.permission.id,
+        name: rp.permission.name,
+        description: rp.permission.description ?? undefined,
+        module: rp.permission.module,
+        action: rp.permission.action
+      }))
     }))
   }
 

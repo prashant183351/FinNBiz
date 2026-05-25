@@ -18,10 +18,10 @@ router.get('/', authenticateToken, async (req, res) => {
       }
     })
 
-    res.json(companies.map(membership => ({
+    res.json(companies.map((membership: any) => ({
       ...membership.company,
       role: membership.role.name,
-      permissions: membership.role.permissions
+      permissions: [] as string[] // permissions loaded separately via RolePermission join
     })))
   } catch (error) {
     console.error('Error fetching companies:', error)
@@ -80,7 +80,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Start a transaction to create company and membership
-    const result = await prisma.$transaction(async (prisma) => {
+    const result = await prisma.$transaction(async (prisma: any) => {
       // Create company
       const company = await prisma.company.create({
         data: {
@@ -99,37 +99,7 @@ router.post('/', authenticateToken, async (req, res) => {
       if (!ownerRole) {
         ownerRole = await prisma.role.create({
           data: {
-            name: 'owner',
-            permissions: [
-              'company:read',
-              'company:update',
-              'company:delete',
-              'user:invite',
-              'user:remove',
-              'invoice:create',
-              'invoice:read',
-              'invoice:update',
-              'invoice:delete',
-              'expense:create',
-              'expense:read',
-              'expense:update',
-              'expense:delete',
-              'report:read',
-              'employee:create',
-              'employee:read',
-              'employee:update',
-              'employee:delete',
-              'attendance:create',
-              'attendance:read',
-              'attendance:update',
-              'payroll:create',
-              'payroll:read',
-              'payroll:update',
-              'advance:create',
-              'advance:read',
-              'advance:update',
-              'advance:approve'
-            ]
+            name: 'owner'
           }
         })
       }
@@ -147,7 +117,7 @@ router.post('/', authenticateToken, async (req, res) => {
     })
 
     res.status(201).json(result)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating company:', error)
     if (error.code === 'P2002') {
       return res.status(400).json({ error: 'GSTIN or PAN already exists' })
@@ -173,7 +143,7 @@ router.put('/:id', authenticateToken, requireCompanyAccess(['company:update']), 
     })
 
     res.json(company)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating company:', error)
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Company not found' })
@@ -195,7 +165,7 @@ router.delete('/:id', authenticateToken, requireRole(['owner']), async (req, res
     })
 
     res.status(204).send()
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting company:', error)
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Company not found' })
@@ -246,15 +216,7 @@ router.post('/:id/invite', authenticateToken, requireCompanyAccess(['user:invite
       // Create default member role if it doesn't exist
       role = await prisma.role.create({
         data: {
-          name: roleName,
-          permissions: [
-            'company:read',
-            'invoice:create',
-            'invoice:read',
-            'expense:create',
-            'expense:read',
-            'report:read'
-          ]
+          name: roleName
         }
       })
     }
@@ -296,8 +258,8 @@ router.delete('/:id/members/:userId', authenticateToken, requireCompanyAccess(['
       include: { role: true }
     })
 
-    const targetMembership = memberships.find(m => m.userId === userId)
-    const currentUserMembership = memberships.find(m => m.userId === (req as any).userId)
+    const targetMembership = memberships.find((m: any) => m.userId === userId)
+    const currentUserMembership = memberships.find((m: any) => m.userId === (req as any).userId)
 
     if (!targetMembership) {
       return res.status(404).json({ error: 'User is not a member of this company' })
@@ -309,7 +271,7 @@ router.delete('/:id/members/:userId', authenticateToken, requireCompanyAccess(['
 
     // If removing an owner, ensure there's at least one owner left
     if (targetMembership.role.name === 'owner') {
-      const ownerCount = memberships.filter(m => m.role.name === 'owner').length
+      const ownerCount = memberships.filter((m: any) => m.role.name === 'owner').length
       if (ownerCount <= 1) {
         return res.status(400).json({ error: 'Cannot remove the last owner' })
       }
@@ -333,6 +295,50 @@ router.delete('/:id/members/:userId', authenticateToken, requireCompanyAccess(['
   } catch (error) {
     console.error('Error removing user:', error)
     res.status(500).json({ error: 'Failed to remove user' })
+  }
+})
+
+// PUT /api/companies/:id/members/:userId/role - Update user role in company
+router.put('/:id/members/:userId/role', authenticateToken, requireCompanyAccess(['user:update']), async (req, res) => {
+  try {
+    const { id, userId } = req.params
+    const { roleName } = req.body
+
+    if (!roleName) {
+      return res.status(400).json({ error: 'Role name is required' })
+    }
+
+    // Get or create role
+    let role = await prisma.role.findUnique({
+      where: { name: roleName }
+    })
+
+    if (!role) {
+      role = await prisma.role.create({
+        data: { name: roleName }
+      })
+    }
+
+    // Update membership
+    const membership = await prisma.membership.update({
+      where: {
+        userId_companyId: {
+          userId,
+          companyId: id
+        }
+      },
+      data: {
+        roleId: role.id
+      },
+      include: {
+        role: true
+      }
+    })
+
+    res.json(membership)
+  } catch (error) {
+    console.error('Error updating user role:', error)
+    res.status(500).json({ error: 'Failed to update user role' })
   }
 })
 

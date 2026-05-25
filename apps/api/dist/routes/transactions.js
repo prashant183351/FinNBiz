@@ -176,5 +176,81 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ error: 'Failed to delete transaction' });
     }
 });
+// POST /api/transactions/journal - Create a manual multi-leg Journal Voucher entry
+router.post('/journal', async (req, res) => {
+    try {
+        const { companyId, date, description, entries } = req.body;
+        if (!companyId || !entries || !Array.isArray(entries) || entries.length < 2) {
+            return res.status(400).json({ error: 'Company ID and at least 2 ledger entries are required' });
+        }
+        // Verify balance: Sum of debits must equal sum of credits
+        let totalDebit = 0;
+        let totalCredit = 0;
+        for (const entry of entries) {
+            totalDebit += parseFloat(entry.debit || 0);
+            totalCredit += parseFloat(entry.credit || 0);
+        }
+        // Allow a very tiny delta tolerance for floating numbers
+        if (Math.abs(totalDebit - totalCredit) > 0.01) {
+            return res.status(400).json({
+                error: `Journal Voucher is unbalanced. Total Debits (₹${totalDebit}) must equal Total Credits (₹${totalCredit}).`
+            });
+        }
+        const { PrismaClient } = await Promise.resolve().then(() => __importStar(require('@prisma/client')));
+        const prisma = new PrismaClient();
+        // Create single parent transaction and multi ledger entries inside a Prisma transaction block
+        const result = await prisma.$transaction(async (tx) => {
+            const parentTransaction = await tx.transaction.create({
+                data: {
+                    companyId,
+                    type: 'transfer', // manual JV adjustments act as internal transfers/journaling
+                    amount: totalDebit,
+                    description: description || 'Manual Journal Voucher Adjustment',
+                    paymentMethod: 'other',
+                    reference: 'MANUAL_JV',
+                    date: date ? new Date(date) : new Date(),
+                    source: 'manual_jv'
+                }
+            });
+            const createdLedgerEntries = [];
+            for (const entry of entries) {
+                const ledger = await tx.ledgerEntry.create({
+                    data: {
+                        companyId,
+                        transactionId: parentTransaction.id,
+                        date: date ? new Date(date) : new Date(),
+                        account: entry.account,
+                        accountType: entry.accountType,
+                        debit: parseFloat(entry.debit || 0),
+                        credit: parseFloat(entry.credit || 0),
+                        description: description || 'Manual Journal Entry Adjustments',
+                        refType: 'journal'
+                    }
+                });
+                createdLedgerEntries.push(ledger);
+            }
+            return { transaction: parentTransaction, ledgerEntries: createdLedgerEntries };
+        });
+        // Trigger report recalculations
+        const { Queue } = await Promise.resolve().then(() => __importStar(require('bullmq')));
+        const { createClient } = await Promise.resolve().then(() => __importStar(require('redis')));
+        const redis = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
+        const reportQueue = new Queue('report-calculations', { connection: redis });
+        await reportQueue.add('update-dashboard', {
+            companyId,
+            reportType: 'dashboard_summary',
+        });
+        res.status(201).json({
+            success: true,
+            transaction: result.transaction,
+            ledgerEntries: result.ledgerEntries,
+            message: 'Journal Voucher posted successfully with balanced ledger entries.'
+        });
+    }
+    catch (error) {
+        console.error('Error creating journal voucher:', error);
+        res.status(500).json({ error: error.message || 'Failed to create Journal Voucher' });
+    }
+});
 exports.default = router;
 //# sourceMappingURL=transactions.js.map

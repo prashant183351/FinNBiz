@@ -4,15 +4,42 @@ exports.SubscriptionService = void 0;
 const client_1 = require("@prisma/client");
 const audit_service_1 = require("./audit.service");
 const prisma = new client_1.PrismaClient();
+function parsePlanFields(plan) {
+    if (!plan)
+        return plan;
+    const parsedPlan = { ...plan };
+    if (typeof parsedPlan.features === 'string') {
+        try {
+            parsedPlan.features = JSON.parse(parsedPlan.features);
+        }
+        catch (e) {
+            parsedPlan.features = {};
+        }
+    }
+    if (typeof parsedPlan.limits === 'string') {
+        try {
+            parsedPlan.limits = JSON.parse(parsedPlan.limits);
+        }
+        catch (e) {
+            parsedPlan.limits = {};
+        }
+    }
+    return parsedPlan;
+}
 class SubscriptionService {
     /**
      * Create or update a plan
      */
     static async createOrUpdatePlan(planData) {
+        const data = {
+            ...planData,
+            features: typeof planData.features === 'object' ? JSON.stringify(planData.features) : planData.features,
+            limits: typeof planData.limits === 'object' ? JSON.stringify(planData.limits) : planData.limits
+        };
         const plan = await prisma.plan.upsert({
             where: { name: planData.name },
-            update: planData,
-            create: planData
+            update: data,
+            create: data
         });
         await audit_service_1.AuditService.log({
             action: 'create',
@@ -21,26 +48,28 @@ class SubscriptionService {
             details: { name: planData.name, price: planData.price },
             success: true
         });
-        return plan;
+        return parsePlanFields(plan);
     }
     /**
      * Get all active plans
      */
     static async getActivePlans() {
-        return prisma.plan.findMany({
+        const plans = await prisma.plan.findMany({
             where: { isActive: true },
             orderBy: { sortOrder: 'asc' }
         });
+        return plans.map((plan) => parsePlanFields(plan));
     }
     /**
      * Get plan by ID or name
      */
     static async getPlan(planId) {
-        return prisma.plan.findUnique({
+        const plan = await (prisma.plan.findUnique({
             where: { id: planId }
         }) || prisma.plan.findUnique({
             where: { name: planId }
-        });
+        }));
+        return parsePlanFields(plan);
     }
     /**
      * Create a subscription
@@ -79,6 +108,9 @@ class SubscriptionService {
                 }
             }
         });
+        if (subscription && subscription.plan) {
+            subscription.plan = parsePlanFields(subscription.plan);
+        }
         await audit_service_1.AuditService.log({
             userId: subscriptionData.userId,
             action: 'create',
@@ -96,7 +128,7 @@ class SubscriptionService {
      * Get user's active subscription
      */
     static async getUserSubscription(userId, companyId) {
-        return prisma.subscription.findFirst({
+        const subscription = await prisma.subscription.findFirst({
             where: {
                 userId,
                 companyId,
@@ -111,6 +143,10 @@ class SubscriptionService {
                 }
             }
         });
+        if (subscription && subscription.plan) {
+            subscription.plan = parsePlanFields(subscription.plan);
+        }
+        return subscription;
     }
     /**
      * Cancel subscription
@@ -197,7 +233,8 @@ class SubscriptionService {
             const freePlan = await prisma.plan.findUnique({
                 where: { name: 'free' }
             });
-            return freePlan?.features?.[feature] || false;
+            const parsedFreePlan = parsePlanFields(freePlan);
+            return parsedFreePlan?.features?.[feature] || false;
         }
         // Check plan features
         return subscription.plan.features?.[feature] || false;
@@ -211,7 +248,8 @@ class SubscriptionService {
             const freePlan = await prisma.plan.findUnique({
                 where: { name: 'free' }
             });
-            const limit = freePlan?.limits?.[resource] || 0;
+            const parsedFreePlan = parsePlanFields(freePlan);
+            const limit = parsedFreePlan?.limits?.[resource] || 0;
             const current = await this.getCurrentUsage(userId, resource, companyId);
             return { allowed: current < limit, current, limit };
         }

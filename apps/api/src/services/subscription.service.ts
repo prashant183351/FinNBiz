@@ -35,15 +35,40 @@ export interface PaymentData {
   metadata?: any
 }
 
+function parsePlanFields(plan: any): any {
+  if (!plan) return plan
+  const parsedPlan = { ...plan }
+  if (typeof parsedPlan.features === 'string') {
+    try {
+      parsedPlan.features = JSON.parse(parsedPlan.features)
+    } catch (e) {
+      parsedPlan.features = {}
+    }
+  }
+  if (typeof parsedPlan.limits === 'string') {
+    try {
+      parsedPlan.limits = JSON.parse(parsedPlan.limits)
+    } catch (e) {
+      parsedPlan.limits = {}
+    }
+  }
+  return parsedPlan
+}
+
 export class SubscriptionService {
   /**
    * Create or update a plan
    */
   static async createOrUpdatePlan(planData: PlanData): Promise<any> {
+    const data = {
+      ...planData,
+      features: typeof planData.features === 'object' ? JSON.stringify(planData.features) : planData.features,
+      limits: typeof planData.limits === 'object' ? JSON.stringify(planData.limits) : planData.limits
+    }
     const plan = await prisma.plan.upsert({
       where: { name: planData.name },
-      update: planData,
-      create: planData
+      update: data,
+      create: data
     })
 
     await AuditService.log({
@@ -54,28 +79,30 @@ export class SubscriptionService {
       success: true
     })
 
-    return plan
+    return parsePlanFields(plan)
   }
 
   /**
    * Get all active plans
    */
   static async getActivePlans(): Promise<any[]> {
-    return prisma.plan.findMany({
+    const plans = await prisma.plan.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: 'asc' }
     })
+    return plans.map((plan: any) => parsePlanFields(plan))
   }
 
   /**
    * Get plan by ID or name
    */
   static async getPlan(planId: string): Promise<any | null> {
-    return prisma.plan.findUnique({
+    const plan = await (prisma.plan.findUnique({
       where: { id: planId }
     }) || prisma.plan.findUnique({
       where: { name: planId }
-    })
+    }))
+    return parsePlanFields(plan)
   }
 
   /**
@@ -119,6 +146,10 @@ export class SubscriptionService {
       }
     })
 
+    if (subscription && subscription.plan) {
+      subscription.plan = parsePlanFields(subscription.plan)
+    }
+
     await AuditService.log({
       userId: subscriptionData.userId,
       action: 'create',
@@ -138,7 +169,7 @@ export class SubscriptionService {
    * Get user's active subscription
    */
   static async getUserSubscription(userId: string, companyId?: string): Promise<any | null> {
-    return prisma.subscription.findFirst({
+    const subscription = await prisma.subscription.findFirst({
       where: {
         userId,
         companyId,
@@ -153,6 +184,10 @@ export class SubscriptionService {
         }
       }
     })
+    if (subscription && subscription.plan) {
+      subscription.plan = parsePlanFields(subscription.plan)
+    }
+    return subscription
   }
 
   /**
@@ -252,7 +287,8 @@ export class SubscriptionService {
       const freePlan = await prisma.plan.findUnique({
         where: { name: 'free' }
       })
-      return freePlan?.features?.[feature] || false
+      const parsedFreePlan = parsePlanFields(freePlan)
+      return parsedFreePlan?.features?.[feature] || false
     }
 
     // Check plan features
@@ -269,7 +305,8 @@ export class SubscriptionService {
       const freePlan = await prisma.plan.findUnique({
         where: { name: 'free' }
       })
-      const limit = freePlan?.limits?.[resource] || 0
+      const parsedFreePlan = parsePlanFields(freePlan)
+      const limit = parsedFreePlan?.limits?.[resource] || 0
       const current = await this.getCurrentUsage(userId, resource, companyId)
       return { allowed: current < limit, current, limit }
     }
@@ -297,7 +334,7 @@ export class SubscriptionService {
       }
     })
 
-    return usages.reduce((sum, usage) => sum + usage.quantity, 0)
+    return usages.reduce((sum: number, usage: any) => sum + usage.quantity, 0)
   }
 
   /**
@@ -320,13 +357,13 @@ export class SubscriptionService {
    * Initialize default plans
    */
   static async initializeDefaultPlans(): Promise<void> {
-    const defaultPlans = [
+    const defaultPlans: PlanData[] = [
       {
         name: 'free',
         displayName: 'Free Tier',
         description: 'Perfect for freelancers and small businesses getting started',
         price: 0,
-        billingCycle: 'monthly',
+        billingCycle: 'monthly' as const,
         features: {
           companies: 1,
           invoices: true,
@@ -349,7 +386,7 @@ export class SubscriptionService {
         displayName: 'Starter',
         description: 'For growing businesses needing more features',
         price: 299,
-        billingCycle: 'monthly',
+        billingCycle: 'monthly' as const,
         features: {
           companies: 3,
           invoices: true,
@@ -372,7 +409,7 @@ export class SubscriptionService {
         displayName: 'Pro',
         description: 'Complete business management solution',
         price: 999,
-        billingCycle: 'monthly',
+        billingCycle: 'monthly' as const,
         features: {
           companies: 10,
           invoices: true,
@@ -396,7 +433,7 @@ export class SubscriptionService {
         displayName: 'Premium AI',
         description: 'AI-powered business intelligence and automation',
         price: 2499,
-        billingCycle: 'monthly',
+        billingCycle: 'monthly' as const,
         features: {
           companies: 25,
           invoices: true,
@@ -422,7 +459,7 @@ export class SubscriptionService {
         displayName: 'Enterprise',
         description: 'Custom enterprise solution with white-label options',
         price: 0, // Custom pricing
-        billingCycle: 'yearly',
+        billingCycle: 'yearly' as const,
         features: {
           companies: -1, // Unlimited
           invoices: true,

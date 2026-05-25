@@ -50,7 +50,7 @@ router.post('/webhook', async (req, res) => {
 
     const transactionData = {
       companyId,
-      type: transactionType,
+      type: transactionType as any,
       amount: transactionAmount,
       description: description || `UPI Transaction ${transactionId}`,
       category: transactionType === 'expense' ? await FinancialService.categorizeExpense(description || '', transactionAmount) : 'Sales Revenue',
@@ -72,7 +72,7 @@ router.post('/webhook', async (req, res) => {
     const { Queue } = await import('bullmq')
     const { createClient } = await import('redis')
     const redis = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' })
-    const reportQueue = new Queue('report-calculations', { connection: redis })
+    const reportQueue = new Queue('report-calculations', { connection: redis as any })
 
     await reportQueue.add('upi-transaction-update', {
       companyId,
@@ -132,7 +132,7 @@ router.post('/bank-import', async (req, res) => {
 
         const transactionData = {
           companyId,
-          type: transactionType,
+          type: transactionType as any,
           amount: transactionAmount,
           description: description || `Bank Transaction ${reference}`,
           category: transactionType === 'expense' ? await FinancialService.categorizeExpense(description || '', transactionAmount) : 'Sales Revenue',
@@ -145,7 +145,7 @@ router.post('/bank-import', async (req, res) => {
 
         const { transaction, ledgerEntries } = await FinancialService.createTransactionWithLedger(transactionData)
         processedTransactions.push({ transaction, ledgerEntries })
-      } catch (err) {
+      } catch (err: any) {
         errors.push({ transaction: bankTxn, error: err.message })
       }
     }
@@ -154,7 +154,7 @@ router.post('/bank-import', async (req, res) => {
     const { Queue } = await import('bullmq')
     const { createClient } = await import('redis')
     const redis = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' })
-    const reportQueue = new Queue('report-calculations', { connection: redis })
+    const reportQueue = new Queue('report-calculations', { connection: redis as any })
 
     await reportQueue.add('bank-import-update', {
       companyId,

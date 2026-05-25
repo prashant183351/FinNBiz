@@ -1,0 +1,50 @@
+{
+  "name": "@finnbiz/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:api": "pnpm --filter @finnbiz/api build",
+    "build:web": "pnpm --filter @finnbiz/web build",
+    "prepackage": "node -e \"const fs=require('fs'); fs.rmSync('bundled', {recursive:true, force:true}); fs.rmSync('dist', {recursive:true, force:true});\"",
+    "package": "npm run prepackage && pnpm build:api && pnpm build:web && node scripts/prepare-bundle.js && electron-builder build --win"
+  },
+  "author": "Antigravity",
+  "description": "FinNBiz Desktop App",
+  "devDependencies": {
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1",
+    "rimraf": "^6.0.0"
+  },
+  "build": {
+    "appId": "com.finnbiz.desktop",
+    "productName": "FinNBiz Setup",
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "mac": {
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "icon": "build/icon.png"
+    },
+    "asar": false,
+    "directories": {
+      "output": "dist"
+    },
+    "extraResources": [
+      {
+        "from": "bundled",
+        "to": "bundled",
+        "filter": ["**/*"]
+      }
+    ],
+    "files": [
+      "main.js",
+      "package.json"
+    ]
+  },
+  "publish": null
+}

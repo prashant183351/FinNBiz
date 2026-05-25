@@ -495,7 +495,7 @@ export class HRService {
 
     const summary = attendance.reduce((acc, record) => {
       acc.totalDays++
-      acc[record.status.toLowerCase()] = (acc[record.status.toLowerCase()] || 0) + 1
+      ;(acc as any)[record.status.toLowerCase()] = ((acc as any)[record.status.toLowerCase()] || 0) + 1
       acc.totalHours += record.hoursWorked || 0
       acc.totalOvertime += record.overtime || 0
       return acc

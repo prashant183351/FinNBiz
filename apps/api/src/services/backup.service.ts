@@ -118,7 +118,7 @@ export class BackupService {
         details: {
           type,
           size: fileSize,
-          encrypted,
+          encrypted: encrypt,
           cloudLocation
         },
         success: true

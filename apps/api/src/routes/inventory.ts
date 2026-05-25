@@ -39,7 +39,7 @@ router.get('/products', requireCompanyAccess(['products.view']), async (req, res
       offset = '0'
     } = req.query
 
-    const companyId = req.companyId!
+    const companyId = (req as any).companyId!
 
     const products = await InventoryService.getProducts(
       companyId,
@@ -98,7 +98,7 @@ router.get('/stock/movements', requireCompanyAccess(['products.view']), async (r
       offset = '0'
     } = req.query
 
-    const companyId = req.companyId!
+    const companyId = (req as any).companyId!
 
     const movements = await InventoryService.getStockMovements(
       productId as string,
@@ -142,7 +142,7 @@ router.get('/vendors', requireCompanyAccess(['products.view']), async (req, res)
       offset = '0'
     } = req.query
 
-    const companyId = req.companyId!
+    const companyId = (req as any).companyId!
 
     const vendors = await InventoryService.getVendors(
       companyId,
@@ -184,7 +184,7 @@ router.get('/purchase-orders', requireCompanyAccess(['products.view']), async (r
       offset = '0'
     } = req.query
 
-    const companyId = req.companyId!
+    const companyId = (req as any).companyId!
 
     const orders = await InventoryService.getPurchaseOrders(
       companyId,
@@ -229,7 +229,7 @@ router.put('/purchase-orders/:orderId/status', requireCompanyAccess(['products.m
 // GET /api/inventory/alerts - Get stock alerts
 router.get('/alerts', requireCompanyAccess(['products.view']), async (req, res) => {
   try {
-    const companyId = req.companyId!
+    const companyId = (req as any).companyId!
     const alerts = await InventoryService.getStockAlerts(companyId)
     res.json(alerts)
   } catch (error) {
@@ -259,7 +259,7 @@ router.put('/alerts/:alertId/resolve', requireCompanyAccess(['products.manage'])
 // GET /api/inventory/reports/valuation - Get stock valuation report
 router.get('/reports/valuation', requireCompanyAccess(['reports.view']), async (req, res) => {
   try {
-    const companyId = req.companyId!
+    const companyId = (req as any).companyId!
     const report = await InventoryService.getStockValuation(companyId)
     res.json(report)
   } catch (error) {
@@ -275,7 +275,7 @@ router.get('/reports/valuation', requireCompanyAccess(['reports.view']), async (
 // POST /api/inventory/auto-purchase-orders - Generate auto purchase orders for low stock
 router.post('/auto-purchase-orders', requireCompanyAccess(['products.manage']), async (req, res) => {
   try {
-    const companyId = req.companyId!
+    const companyId = (req as any).companyId!
     const generatedBy = (req as any).userId
 
     const orders = await InventoryService.generateAutoPurchaseOrders(companyId, generatedBy)
@@ -298,7 +298,7 @@ router.post('/scan', requireCompanyAccess(['products.manage']), async (req, res)
   try {
     const { barcode, type, productId, quantity } = req.body
     const performedBy = (req as any).userId
-    const companyId = req.companyId!
+    const companyId = (req as any).companyId!
 
     let product
     let movement

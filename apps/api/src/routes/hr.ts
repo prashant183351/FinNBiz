@@ -1,5 +1,5 @@
 import express, { Router } from 'express'
-import { authenticateToken, requireCompanyAccess } from '../middleware/auth'
+import { authenticateToken, requireCompanyAccess, AuthRequest } from '../middleware/auth'
 import { auditLogger } from '../middleware/audit'
 import { HRService } from '../services/hr.service'
 
@@ -44,7 +44,7 @@ router.get('/leave', requireCompanyAccess(['employees.view']), async (req, res) 
       offset = '0'
     } = req.query
 
-    const companyId = req.companyId!
+    const companyId = (req as AuthRequest).companyId!
 
     const leaves = await HRService.getLeaveRequests(
       employeeId as string,
@@ -140,7 +140,7 @@ router.get('/incentives', requireCompanyAccess(['payroll.view']), async (req, re
       offset = '0'
     } = req.query
 
-    const companyId = req.companyId!
+    const companyId = (req as AuthRequest).companyId!
 
     const incentives = await HRService.getIncentives(
       employeeId as string,
@@ -217,7 +217,7 @@ router.get('/compliance', requireCompanyAccess(['payroll.view']), async (req, re
       offset = '0'
     } = req.query
 
-    const companyId = req.companyId!
+    const companyId = (req as AuthRequest).companyId!
 
     const records = await HRService.getComplianceRecords(
       employeeId as string,

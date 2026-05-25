@@ -46,7 +46,7 @@ export class TwoFactorService {
       update: {
         type: 'totp',
         secret: secret.base32,
-        backupCodes: this.encryptBackupCodes(backupCodes),
+        backupCodes: JSON.stringify(this.encryptBackupCodes(backupCodes)),
         verified: false,
         enabled: false
       },
@@ -54,7 +54,7 @@ export class TwoFactorService {
         userId,
         type: 'totp',
         secret: secret.base32,
-        backupCodes: this.encryptBackupCodes(backupCodes),
+        backupCodes: JSON.stringify(this.encryptBackupCodes(backupCodes)),
         verified: false,
         enabled: false
       }
@@ -125,7 +125,7 @@ export class TwoFactorService {
     }
 
     // Check backup codes if TOTP failed
-    const backupCodes = this.decryptBackupCodes(twoFactor.backupCodes)
+    const backupCodes = this.decryptBackupCodes(JSON.parse(twoFactor.backupCodes || '[]'))
     const backupCodeIndex = backupCodes.indexOf(token)
 
     if (backupCodeIndex !== -1) {
@@ -134,7 +134,7 @@ export class TwoFactorService {
       await prisma.twoFactor.update({
         where: { userId },
         data: {
-          backupCodes: this.encryptBackupCodes(backupCodes)
+          backupCodes: JSON.stringify(this.encryptBackupCodes(backupCodes))
         }
       })
       return { verified: true, backupCodeUsed: true }
@@ -255,7 +255,7 @@ export class TwoFactorService {
         enabled: false,
         verified: false,
         secret: null,
-        backupCodes: []
+        backupCodes: '[]'
       }
     })
   }

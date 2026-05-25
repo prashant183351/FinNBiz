@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -94,6 +94,16 @@ model Invoice {
   totalGST       Float    @default(0)
   totalAmount    Float    @default(0)
   status         String   @default("draft") // draft, finalized, paid
+  irn            String?
+  ewayBillNumber String?
+  ewayTransporterId String?
+  ewayVehicleNumber String?
+  ewayDistance   Float?
+  currency       String   @default("INR")
+  exchangeRate   Float    @default(1.0)
+  whatsappSentAt DateTime?
+  whatsappPhone  String?
+  ewayPartBReason String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -258,7 +268,7 @@ model Transaction {
   vendor      String?  // For recurring payments
   date        DateTime @default(now())
   source      String   // "manual", "upi", "bank_import", "invoice"
-  metadata    Json?    // Additional data like UPI ID, bank details
+  metadata    String?  // Additional data like UPI ID, bank details
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -299,7 +309,7 @@ model FinancialReport {
   year      Int
   month     Int?     // For monthly reports
   quarter   Int?     // For quarterly reports
-  data      Json     // Cached report data
+  data      String   // Cached report data
   generatedAt DateTime @default(now())
   expiresAt DateTime // When to regenerate
 
@@ -316,7 +326,7 @@ model TwoFactor {
   userId      String   @unique
   type        String   // "totp", "sms", "email"
   secret      String?  // For TOTP
-  backupCodes String[] // Encrypted backup codes
+  backupCodes String   @default("[]") // Encrypted backup codes
   verified    Boolean  @default(false)
   enabled     Boolean  @default(false)
   phoneNumber String?  // For SMS 2FA
@@ -335,7 +345,7 @@ model AuditLog {
   action      String   // "create", "update", "delete", "login", "logout", "view"
   resource    String   // "user", "company", "invoice", "expense", etc.
   resourceId  String?
-  details     Json?    // Additional context about the action
+  details     String?  // Additional context about the action
   ipAddress   String?
   userAgent   String?
   timestamp   DateTime @default(now())
@@ -590,8 +600,8 @@ model Plan {
   price       Float    // Monthly price in INR
   currency    String   @default("INR")
   billingCycle String  @default("monthly") // "monthly", "yearly"
-  features    Json?    // Feature limits and capabilities
-  limits      Json?    // Usage limits (companies, invoices, etc.)
+  features    String?  // Feature limits and capabilities
+  limits      String?  // Usage limits (companies, invoices, etc.)
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
@@ -613,7 +623,7 @@ model Subscription {
   trialEnd      DateTime?
   cancelAtPeriodEnd Boolean @default(false)
   cancelledAt   DateTime?
-  metadata      Json?     // Additional subscription data
+  metadata      String?   // Additional subscription data
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -635,14 +645,14 @@ model Payment {
   status          String   @default("pending") // "pending", "completed", "failed", "refunded"
   paymentMethod   String   // "razorpay", "phonepe", "bank_transfer", "wallet"
   gatewayId       String?  // Payment gateway transaction ID
-  gatewayResponse Json?    // Full gateway response
+  gatewayResponse String?  // Full gateway response
   description     String?
   invoiceUrl      String?  // Generated invoice PDF URL
   dueDate         DateTime?
   paidAt          DateTime?
   refundedAt      DateTime?
   refundAmount    Float?
-  metadata        Json?    // Additional payment data
+  metadata        String?  // Additional payment data
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -662,7 +672,7 @@ model Commission {
   description String?
   status      String   @default("pending") // "pending", "paid", "cancelled"
   paidAt      DateTime?
-  metadata    Json?    // Additional commission data
+  metadata    String?  // Additional commission data
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -680,7 +690,7 @@ model Addon {
   price       Float    // One-time or monthly price
   currency    String   @default("INR")
   billingType String   @default("one_time") // "one_time", "monthly", "yearly"
-  features    Json?    // What this addon provides
+  features    String?  // What this addon provides
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
@@ -698,7 +708,7 @@ model AddonPurchase {
   status    String   @default("active") // "active", "cancelled", "expired"
   purchasedAt DateTime
   expiresAt   DateTime?
-  metadata  Json?    // Purchase-specific data
+  metadata  String?  // Purchase-specific data
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -736,7 +746,7 @@ model Usage {
   action        String   // API endpoint called or feature used
   quantity      Int      @default(1) // Number of units consumed
   cost          Float    @default(0) // Cost incurred
-  metadata      Json?    // Additional usage data
+  metadata      String?  // Additional usage data
   createdAt     DateTime @default(now())
 
   subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
@@ -760,7 +770,7 @@ model Reseller {
   status      String   @default("pending") // "pending", "approved", "rejected", "active", "suspended"
   approvedAt  DateTime?
   approvedBy  String?
-  metadata    Json?    // Additional reseller data
+  metadata    String?  // Additional reseller data
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -793,7 +803,7 @@ model GatewayConfig {
   id          String   @id @default(cuid())
   gateway     String   @unique // "razorpay", "phonepe", "cashfree"
   isActive    Boolean  @default(true)
-  config      Json     // Encrypted gateway configuration
+  config      String   // Encrypted gateway configuration
   testMode    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

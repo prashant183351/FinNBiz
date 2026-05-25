@@ -1,1 +1,10 @@
 node_modules
+dist
+.next
+out
+.turbo
+*.log
+*.db
+bundled
+win-unpacked
+apps/web/android

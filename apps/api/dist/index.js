@@ -20,6 +20,9 @@ const hr_1 = __importDefault(require("./routes/hr"));
 const inventory_1 = __importDefault(require("./routes/inventory"));
 const subscription_1 = __importDefault(require("./routes/subscription"));
 const payment_1 = __importDefault(require("./routes/payment"));
+const invoices_1 = __importDefault(require("./routes/invoices"));
+const vendors_1 = __importDefault(require("./routes/vendors"));
+const purchases_1 = __importDefault(require("./routes/purchases"));
 const audit_1 = require("./middleware/audit");
 const permissions_service_1 = require("./services/permissions.service");
 const subscription_service_1 = require("./services/subscription.service");
@@ -54,6 +57,9 @@ app.use('/api/hr', hr_1.default);
 app.use('/api/inventory', inventory_1.default);
 app.use('/api/subscription', subscription_1.default);
 app.use('/api/payment', payment_1.default);
+app.use('/api/invoices', invoices_1.default);
+app.use('/api/vendors', vendors_1.default);
+app.use('/api/purchases', purchases_1.default);
 // Apply audit logging to all API routes (except auth)
 app.use('/api', (0, audit_1.auditLogger)({
     excludePaths: ['/api/auth/login', '/api/auth/refresh', '/api/health']

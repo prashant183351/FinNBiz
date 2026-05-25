@@ -93,7 +93,7 @@ export class AuditService {
           action,
           resource,
           resourceId,
-          details: details ? JSON.parse(JSON.stringify(details)) : null,
+          details: details ? JSON.stringify(details) : null,
           ipAddress,
           userAgent,
           success

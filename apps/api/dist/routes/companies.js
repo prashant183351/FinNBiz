@@ -16,10 +16,10 @@ router.get('/', auth_1.authenticateToken, async (req, res) => {
                 role: true
             }
         });
-        res.json(companies.map(membership => ({
+        res.json(companies.map((membership) => ({
             ...membership.company,
             role: membership.role.name,
-            permissions: membership.role.permissions
+            permissions: [] // permissions loaded separately via RolePermission join
         })));
     }
     catch (error) {
@@ -90,37 +90,7 @@ router.post('/', auth_1.authenticateToken, async (req, res) => {
             if (!ownerRole) {
                 ownerRole = await prisma.role.create({
                     data: {
-                        name: 'owner',
-                        permissions: [
-                            'company:read',
-                            'company:update',
-                            'company:delete',
-                            'user:invite',
-                            'user:remove',
-                            'invoice:create',
-                            'invoice:read',
-                            'invoice:update',
-                            'invoice:delete',
-                            'expense:create',
-                            'expense:read',
-                            'expense:update',
-                            'expense:delete',
-                            'report:read',
-                            'employee:create',
-                            'employee:read',
-                            'employee:update',
-                            'employee:delete',
-                            'attendance:create',
-                            'attendance:read',
-                            'attendance:update',
-                            'payroll:create',
-                            'payroll:read',
-                            'payroll:update',
-                            'advance:create',
-                            'advance:read',
-                            'advance:update',
-                            'advance:approve'
-                        ]
+                        name: 'owner'
                     }
                 });
             }
@@ -223,15 +193,7 @@ router.post('/:id/invite', auth_1.authenticateToken, (0, auth_1.requireCompanyAc
             // Create default member role if it doesn't exist
             role = await prisma.role.create({
                 data: {
-                    name: roleName,
-                    permissions: [
-                        'company:read',
-                        'invoice:create',
-                        'invoice:read',
-                        'expense:create',
-                        'expense:read',
-                        'report:read'
-                    ]
+                    name: roleName
                 }
             });
         }
@@ -269,8 +231,8 @@ router.delete('/:id/members/:userId', auth_1.authenticateToken, (0, auth_1.requi
             where: { companyId: id },
             include: { role: true }
         });
-        const targetMembership = memberships.find(m => m.userId === userId);
-        const currentUserMembership = memberships.find(m => m.userId === req.userId);
+        const targetMembership = memberships.find((m) => m.userId === userId);
+        const currentUserMembership = memberships.find((m) => m.userId === req.userId);
         if (!targetMembership) {
             return res.status(404).json({ error: 'User is not a member of this company' });
         }
@@ -279,7 +241,7 @@ router.delete('/:id/members/:userId', auth_1.authenticateToken, (0, auth_1.requi
         }
         // If removing an owner, ensure there's at least one owner left
         if (targetMembership.role.name === 'owner') {
-            const ownerCount = memberships.filter(m => m.role.name === 'owner').length;
+            const ownerCount = memberships.filter((m) => m.role.name === 'owner').length;
             if (ownerCount <= 1) {
                 return res.status(400).json({ error: 'Cannot remove the last owner' });
             }
@@ -301,6 +263,45 @@ router.delete('/:id/members/:userId', auth_1.authenticateToken, (0, auth_1.requi
     catch (error) {
         console.error('Error removing user:', error);
         res.status(500).json({ error: 'Failed to remove user' });
+    }
+});
+// PUT /api/companies/:id/members/:userId/role - Update user role in company
+router.put('/:id/members/:userId/role', auth_1.authenticateToken, (0, auth_1.requireCompanyAccess)(['user:update']), async (req, res) => {
+    try {
+        const { id, userId } = req.params;
+        const { roleName } = req.body;
+        if (!roleName) {
+            return res.status(400).json({ error: 'Role name is required' });
+        }
+        // Get or create role
+        let role = await prisma.role.findUnique({
+            where: { name: roleName }
+        });
+        if (!role) {
+            role = await prisma.role.create({
+                data: { name: roleName }
+            });
+        }
+        // Update membership
+        const membership = await prisma.membership.update({
+            where: {
+                userId_companyId: {
+                    userId,
+                    companyId: id
+                }
+            },
+            data: {
+                roleId: role.id
+            },
+            include: {
+                role: true
+            }
+        });
+        res.json(membership);
+    }
+    catch (error) {
+        console.error('Error updating user role:', error);
+        res.status(500).json({ error: 'Failed to update user role' });
     }
 });
 exports.default = router;

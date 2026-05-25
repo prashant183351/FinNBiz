@@ -1,5 +1,5 @@
 import express, { Router } from 'express'
-import { authenticateToken, requireCompanyAccess } from '../middleware/auth'
+import { authenticateToken, requireCompanyAccess, AuthRequest } from '../middleware/auth'
 import { auditLogger } from '../middleware/audit'
 import { AuditService } from '../services/audit.service'
 import { PermissionsService } from '../services/permissions.service'
@@ -30,7 +30,7 @@ router.get('/audit', requireCompanyAccess(['admin.audit.view']), async (req, res
       offset = '0'
     } = req.query
 
-    const companyId = req.companyId!
+    const companyId = (req as AuthRequest).companyId!
 
     const options: any = {
       companyId,
@@ -58,7 +58,7 @@ router.get('/audit', requireCompanyAccess(['admin.audit.view']), async (req, res
 router.get('/audit/stats', requireCompanyAccess(['admin.audit.view']), async (req, res) => {
   try {
     const { days = '30' } = req.query
-    const companyId = req.companyId!
+    const companyId = (req as AuthRequest).companyId!
 
     const stats = await AuditService.getAuditStats(companyId, parseInt(days as string))
 
@@ -73,7 +73,7 @@ router.get('/audit/stats', requireCompanyAccess(['admin.audit.view']), async (re
 router.post('/audit/export', requireCompanyAccess(['admin.audit.view']), async (req, res) => {
   try {
     const { startDate, endDate, format = 'json' } = req.body
-    const companyId = req.companyId!
+    const companyId = (req as AuthRequest).companyId!
 
     if (!startDate || !endDate) {
       return res.status(400).json({ error: 'Start date and end date are required' })
@@ -150,7 +150,7 @@ router.post('/roles', requireCompanyAccess(['admin.roles.manage']), async (req, 
 router.put('/roles/:roleId/users/:userId', requireCompanyAccess(['admin.roles.manage']), async (req, res) => {
   try {
     const { roleId, userId } = req.params
-    const companyId = req.companyId!
+    const companyId = (req as AuthRequest).companyId!
 
     // Verify the role exists
     const role = await PermissionsService.getRoleWithPermissions(roleId)
@@ -259,7 +259,7 @@ router.get('/users', requireCompanyAccess(['admin.roles.view']), async (req, res
     const { PrismaClient } = await import('@prisma/client')
     const prisma = new PrismaClient()
 
-    const companyId = req.companyId!
+    const companyId = (req as AuthRequest).companyId!
 
     const memberships = await prisma.membership.findMany({
       where: { companyId },
@@ -284,7 +284,7 @@ router.get('/users', requireCompanyAccess(['admin.roles.view']), async (req, res
       }
     })
 
-    const users = memberships.map(membership => ({
+    const users = memberships.map((membership: any) => ({
       id: membership.user.id,
       email: membership.user.email,
       name: membership.user.name,
@@ -293,7 +293,7 @@ router.get('/users', requireCompanyAccess(['admin.roles.view']), async (req, res
         id: membership.role.id,
         name: membership.role.name,
         description: membership.role.description,
-        permissions: membership.role.permissions.map(rp => rp.permission)
+        permissions: membership.role.permissions.map((rp: any) => rp.permission)
       },
       joinedAt: membership.createdAt
     }))

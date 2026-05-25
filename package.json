@@ -17,9 +17,17 @@
     "db:migrate": "turbo db:migrate",
     "db:studio": "turbo db:studio",
     "db:seed": "turbo db:seed",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "desktop": "pnpm --filter @finnbiz/desktop start",
+    "desktop:package": "pnpm --filter @finnbiz/desktop package",
+    "mobile:init": "pnpm --filter @finnbiz/web i @capacitor/core @capacitor/cli && npx -p @capacitor/cli cap init FinNBiz com.finnbiz.app --web-dir=out",
+    "mobile:android:add": "pnpm --filter @finnbiz/web i @capacitor/android && npx -p @capacitor/cli cap add android",
+    "mobile:build": "pnpm --filter @finnbiz/web build:mobile && cd apps/web && npx -p @capacitor/cli cap sync android",
+    "mobile:android": "cd apps/web && npx -p @capacitor/cli cap open android"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
     "@types/node": "^20.10.0",
     "eslint": "^8.55.0",
     "eslint-config-custom": "workspace:*",

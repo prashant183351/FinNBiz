@@ -15,6 +15,9 @@ import hrRoutes from './routes/hr'
 import inventoryRoutes from './routes/inventory'
 import subscriptionRoutes from './routes/subscription'
 import paymentRoutes from './routes/payment'
+import invoiceRoutes from './routes/invoices'
+import vendorsRoutes from './routes/vendors'
+import purchasesRoutes from './routes/purchases'
 import { authenticateToken } from './middleware/auth'
 import { auditLogger } from './middleware/audit'
 import { PermissionsService } from './services/permissions.service'
@@ -55,6 +58,9 @@ app.use('/api/hr', hrRoutes)
 app.use('/api/inventory', inventoryRoutes)
 app.use('/api/subscription', subscriptionRoutes)
 app.use('/api/payment', paymentRoutes)
+app.use('/api/invoices', invoiceRoutes)
+app.use('/api/vendors', vendorsRoutes)
+app.use('/api/purchases', purchasesRoutes)
 
 // Apply audit logging to all API routes (except auth)
 app.use('/api', auditLogger({

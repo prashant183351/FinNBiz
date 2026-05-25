@@ -173,7 +173,7 @@ export class PaymentService {
         where: { id: paymentId },
         data: {
           status: 'failed',
-          gatewayResponse: { error: error.message }
+          gatewayResponse: { error: error.message } as any
         }
       })
 

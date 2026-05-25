@@ -151,7 +151,7 @@ router.post('/', authenticateToken, requireCompanyAccess(), async (req: AuthRequ
     })
 
     res.status(201).json(employee)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating employee:', error)
     if (error.code === 'P2002') {
       return res.status(400).json({ error: 'Employee ID already exists' })
@@ -210,7 +210,7 @@ router.put('/:id', authenticateToken, requireCompanyAccess(['employee:update']),
     })
 
     res.json(employee)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating employee:', error)
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Employee not found' })
@@ -239,7 +239,7 @@ router.delete('/:id', authenticateToken, requireCompanyAccess(['employee:delete'
     })
 
     res.status(204).send()
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting employee:', error)
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Employee not found' })
