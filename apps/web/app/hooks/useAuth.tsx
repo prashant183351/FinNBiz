@@ -35,8 +35,8 @@ interface AuthContextProps {
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined)
 
-const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001/api' : 'https://finnbiz.onrender.com/api')
+export const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001/api' : 'https://finnbiz.onrender.com/api')
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
