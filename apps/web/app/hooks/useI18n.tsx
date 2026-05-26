@@ -185,7 +185,17 @@ const translations: Translations = {
     'analytics.ai_insights': 'AI Expense Trends',
     'analytics.income': 'Total Income',
     'analytics.expense': 'Total Expenses',
-    'analytics.profit': 'Net Profit / Loss'
+    'analytics.profit': 'Net Profit / Loss',
+    
+    'sub.title': 'Subscription & Billing',
+    'sub.subtitle': 'Upgrade your plan to unlock premium features.',
+    'sub.current': 'Current Plan',
+    'sub.upgrade': 'Upgrade Plan',
+    'sub.free': 'Free Tier',
+    'sub.starter': 'Starter',
+    'sub.pro': 'Pro',
+    'sub.premium': 'Premium AI',
+    'sub.enterprise': 'Enterprise'
   },
   hi: {
     'brand.name': 'फ़िनएन्बिज़ (FinNbiz)',
@@ -361,7 +371,17 @@ const translations: Translations = {
     'analytics.ai_insights': 'AI खर्च रुझान',
     'analytics.income': 'कुल आय (Income)',
     'analytics.expense': 'कुल खर्च (Expenses)',
-    'analytics.profit': 'शुद्ध लाभ / हानि (Net Profit)'
+    'analytics.profit': 'शुद्ध लाभ / हानि (Net Profit)',
+    
+    'sub.title': 'सब्सक्रिप्शन और बिलिंग',
+    'sub.subtitle': 'प्रीमियम सुविधाओं के लिए अपना प्लान अपग्रेड करें।',
+    'sub.current': 'वर्तमान प्लान',
+    'sub.upgrade': 'अपग्रेड करें',
+    'sub.free': 'मुफ़्त (Free)',
+    'sub.starter': 'स्टार्टर (Starter)',
+    'sub.pro': 'प्रो (Pro)',
+    'sub.premium': 'प्रीमियम एआई (Premium AI)',
+    'sub.enterprise': 'एंटरप्राइज़ (Enterprise)'
   }
 }
 
