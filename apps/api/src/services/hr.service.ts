@@ -517,4 +517,171 @@ export class HRService {
       attendancePercentage: summary.totalDays > 0 ? (summary.present / summary.totalDays) * 100 : 0
     }
   }
+
+  /**
+   * Log daily attendance with GPS coordinate verification using Haversine formula
+   */
+  static async logDailyAttendance(
+    employeeId: string,
+    dateStr: string,
+    status: 'Present' | 'Absent' | 'Half',
+    checkInLat?: number,
+    checkInLng?: number,
+    checkOutLat?: number,
+    checkOutLng?: number,
+    notes?: string
+  ): Promise<any> {
+    const checkDate = new Date(dateStr)
+    checkDate.setUTCHours(0, 0, 0, 0)
+
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+      include: { company: true }
+    })
+
+    if (!employee) {
+      throw new Error('Employee not found')
+    }
+
+    const company = employee.company
+    let isGeofenced = true
+
+    if (checkInLat !== undefined && checkInLng !== undefined && company?.lat !== null && company?.lng !== null && company?.lat !== undefined && company?.lng !== undefined) {
+      const cLat = company.lat as number
+      const cLng = company.lng as number
+      const radius = company.geofenceRadius || 200.0
+
+      // Haversine distance formula
+      const R = 6371000 // Earth's radius in meters
+      const dLat = (checkInLat - cLat) * Math.PI / 180
+      const dLng = (checkInLng - cLng) * Math.PI / 180
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(cLat * Math.PI / 180) * Math.cos(checkInLat * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2)
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+      const distance = R * c
+
+      if (distance > radius) {
+        isGeofenced = false
+      }
+    }
+
+    const existing = await prisma.attendance.findUnique({
+      where: {
+        employeeId_date: {
+          employeeId,
+          date: checkDate
+        }
+      }
+    })
+
+    let attendanceRecord
+    const now = new Date()
+
+    if (existing) {
+      attendanceRecord = await prisma.attendance.update({
+        where: { id: existing.id },
+        data: {
+          status,
+          checkOut: now,
+          checkOutLat,
+          checkOutLng,
+          notes: notes || existing.notes,
+          hoursWorked: existing.checkIn ? parseFloat(((now.getTime() - existing.checkIn.getTime()) / (1000 * 60 * 60)).toFixed(2)) : null
+        }
+      })
+    } else {
+      attendanceRecord = await prisma.attendance.create({
+        data: {
+          employeeId,
+          date: checkDate,
+          status,
+          checkIn: now,
+          checkInLat,
+          checkInLng,
+          isGeofenced,
+          notes
+        }
+      })
+    }
+
+    return attendanceRecord
+  }
+
+  /**
+   * Update employee UPI ID
+   */
+  static async updateEmployeeUpiId(employeeId: string, upiId: string): Promise<any> {
+    return prisma.employee.update({
+      where: { id: employeeId },
+      data: { upiId }
+    })
+  }
+
+  /**
+   * Send simulated WhatsApp Payslip
+   */
+  static async sendWhatsAppPayslip(payrollId: string, phone: string): Promise<any> {
+    const payroll = await prisma.payroll.findUnique({
+      where: { id: payrollId },
+      include: { employee: true }
+    })
+
+    if (!payroll) {
+      throw new Error('Payroll not found')
+    }
+
+    console.log(`[WhatsApp Payslip Simulator] Dispatching to ${phone} for ${payroll.employee.name}: Net Pay ₹${payroll.netPay}`)
+
+    return prisma.payroll.update({
+      where: { id: payrollId },
+      data: {
+        whatsappSentAt: new Date(),
+        whatsappPhone: phone
+      }
+    })
+  }
+
+  /**
+   * Get company geofencing configuration
+   */
+  static async getCompanyGeofence(companyId: string): Promise<any> {
+    return prisma.company.findUnique({
+      where: { id: companyId },
+      select: {
+        id: true,
+        name: true,
+        lat: true,
+        lng: true,
+        geofenceRadius: true
+      }
+    })
+  }
+
+  /**
+   * Update company geofencing configuration
+   */
+  static async updateCompanyGeofence(
+    companyId: string,
+    lat: number,
+    lng: number,
+    geofenceRadius: number
+  ): Promise<any> {
+    return prisma.company.update({
+      where: { id: companyId },
+      data: {
+        lat,
+        lng,
+        geofenceRadius
+      },
+      select: {
+        id: true,
+        name: true,
+        lat: true,
+        lng: true,
+        geofenceRadius: true
+      }
+    })
+  }
 }

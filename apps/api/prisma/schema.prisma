@@ -36,6 +36,9 @@ model Company {
   gstin     String?  @unique
   pan       String?  @unique
   address   String?
+  lat       Float?
+  lng       Float?
+  geofenceRadius Float? @default(200.0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -170,6 +173,7 @@ model Employee {
   bankAccount   String?  // For salary transfers
   bankName      String?
   ifscCode      String?
+  upiId         String?  // UPI ID for direct salary payout
   panNumber     String?
   aadhaarNumber String?
   address       String?
@@ -197,6 +201,11 @@ model Attendance {
   checkOut   DateTime?
   hoursWorked Float?  // Calculated working hours
   overtime   Float    @default(0) // Overtime hours
+  checkInLat   Float?
+  checkInLng   Float?
+  checkOutLat  Float?
+  checkOutLng  Float?
+  isGeofenced  Boolean  @default(true)
   notes      String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -229,6 +238,8 @@ model Payroll {
   paymentMethod String?  // UPI, Bank Transfer, Cash
   transactionId String? @db.ObjectId
   payslipUrl    String?  // URL to generated payslip PDF
+  whatsappSentAt DateTime?
+  whatsappPhone  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

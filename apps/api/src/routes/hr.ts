@@ -279,4 +279,107 @@ router.get('/attendance/summary/:employeeId/:month/:year', async (req, res) => {
   }
 })
 
+// ============================================================================
+// GPS & GEOFENCED ATTENDANCE LOGGING
+// ============================================================================
+
+// POST /api/hr/attendance/log - Log daily attendance with GPS coordinate verification
+router.post('/attendance/log', async (req, res) => {
+  try {
+    const { employeeId, date, status, checkInLat, checkInLng, checkOutLat, checkOutLng, notes } = req.body
+    
+    if (!employeeId || !date || !status) {
+      return res.status(400).json({ error: 'EmployeeId, date, and status are required' })
+    }
+
+    const attendance = await HRService.logDailyAttendance(
+      employeeId,
+      date,
+      status,
+      checkInLat !== undefined && checkInLat !== null ? parseFloat(checkInLat) : undefined,
+      checkInLng !== undefined && checkInLng !== null ? parseFloat(checkInLng) : undefined,
+      checkOutLat !== undefined && checkOutLat !== null ? parseFloat(checkOutLat) : undefined,
+      checkOutLng !== undefined && checkOutLng !== null ? parseFloat(checkOutLng) : undefined,
+      notes
+    )
+
+    res.json(attendance)
+  } catch (error) {
+    console.error('Error logging attendance with GPS:', error)
+    res.status(500).json({ error: 'Failed to log daily attendance' })
+  }
+})
+
+// PUT /api/hr/employees/:employeeId/upi - Update employee VPA / UPI ID
+router.put('/employees/:employeeId/upi', async (req, res) => {
+  try {
+    const { employeeId } = req.params
+    const { upiId } = req.body
+
+    if (!upiId) {
+      return res.status(400).json({ error: 'UPI VPA ID is required' })
+    }
+
+    const employee = await HRService.updateEmployeeUpiId(employeeId, upiId)
+    res.json(employee)
+  } catch (error) {
+    console.error('Error updating employee UPI ID:', error)
+    res.status(500).json({ error: 'Failed to update employee UPI ID' })
+  }
+})
+
+// POST /api/hr/payroll/:payrollId/whatsapp - Dispatch simulated WhatsApp payslip delivery
+router.post('/payroll/:payrollId/whatsapp', async (req, res) => {
+  try {
+    const { payrollId } = req.params
+    const { phone } = req.body
+
+    if (!phone) {
+      return res.status(400).json({ error: 'Recipient phone number is required' })
+    }
+
+    const payroll = await HRService.sendWhatsAppPayslip(payrollId, phone)
+    res.json({ success: true, message: 'Payslip simulated delivery logged successfully', payroll })
+  } catch (error) {
+    console.error('Error dispatching WhatsApp payslip:', error)
+    res.status(500).json({ error: 'Failed to send WhatsApp payslip' })
+  }
+})
+
+// GET /api/hr/company/geofence - Retrieve company geofencing center coordinates
+router.get('/company/geofence', async (req, res) => {
+  try {
+    const companyId = (req as AuthRequest).companyId!
+    const config = await HRService.getCompanyGeofence(companyId)
+    res.json(config)
+  } catch (error) {
+    console.error('Error fetching company geofence configuration:', error)
+    res.status(500).json({ error: 'Failed to retrieve geofence configuration' })
+  }
+})
+
+// POST /api/hr/company/geofence - Set/Update company geofencing center coordinates
+router.post('/company/geofence', async (req, res) => {
+  try {
+    const companyId = (req as AuthRequest).companyId!
+    const { lat, lng, geofenceRadius } = req.body
+
+    if (lat === undefined || lng === undefined) {
+      return res.status(400).json({ error: 'Latitude and Longitude are required' })
+    }
+
+    const updated = await HRService.updateCompanyGeofence(
+      companyId,
+      parseFloat(lat),
+      parseFloat(lng),
+      geofenceRadius !== undefined && geofenceRadius !== null ? parseFloat(geofenceRadius) : 200.0
+    )
+
+    res.json(updated)
+  } catch (error) {
+    console.error('Error updating company geofence configuration:', error)
+    res.status(500).json({ error: 'Failed to update geofence configuration' })
+  }
+})
+
 export default router
