@@ -64,8 +64,9 @@ router.get('/products', requireCompanyAccess(['products.view']), async (req, res
 router.get('/products/:productId/stock', requireCompanyAccess(['products.view']), async (req, res) => {
   try {
     const { productId } = req.params
-    const currentStock = await InventoryService.getCurrentStock(productId)
-    res.json({ productId, currentStock })
+    const { warehouseId } = req.query
+    const currentStock = await InventoryService.getCurrentStock(productId, warehouseId as string)
+    res.json({ productId, currentStock, warehouseId })
   } catch (error) {
     console.error('Error fetching product stock:', error)
     res.status(500).json({ error: 'Failed to fetch product stock' })
@@ -396,6 +397,71 @@ router.post('/production', requireCompanyAccess(['products.manage']), async (req
   } catch (error: any) {
     console.error('Error creating production order:', error)
     res.status(400).json({ error: error.message || 'Failed to create production order' })
+  }
+})
+
+// ============================================================================
+// WAREHOUSE / GODOWN MANAGEMENT
+// ============================================================================
+
+// POST /api/inventory/warehouses - Create a warehouse
+router.post('/warehouses', requireCompanyAccess(['products.manage']), async (req, res) => {
+  try {
+    const { name, address, manager } = req.body
+    const companyId = (req as any).companyId!
+    const performedBy = (req as any).userId
+
+    const warehouse = await InventoryService.createWarehouse(companyId, { name, address, manager }, performedBy)
+    res.json(warehouse)
+  } catch (error: any) {
+    console.error('Error creating warehouse:', error)
+    res.status(500).json({ error: error.message || 'Failed to create warehouse' })
+  }
+})
+
+// GET /api/inventory/warehouses - Get warehouses for company
+router.get('/warehouses', requireCompanyAccess(['products.view']), async (req, res) => {
+  try {
+    const companyId = (req as any).companyId!
+    const warehouses = await InventoryService.getWarehouses(companyId)
+    res.json(warehouses)
+  } catch (error: any) {
+    console.error('Error fetching warehouses:', error)
+    res.status(500).json({ error: error.message || 'Failed to fetch warehouses' })
+  }
+})
+
+// POST /api/inventory/transfers - Create stock transfer between warehouses
+router.post('/transfers', requireCompanyAccess(['products.manage']), async (req, res) => {
+  try {
+    const { productId, fromWarehouseId, toWarehouseId, quantity, notes } = req.body
+    const companyId = (req as any).companyId!
+    const performedBy = (req as any).userId
+
+    const transfer = await InventoryService.createStockTransfer(companyId, {
+      productId,
+      fromWarehouseId,
+      toWarehouseId,
+      quantity,
+      performedBy,
+      notes
+    })
+    res.json(transfer)
+  } catch (error: any) {
+    console.error('Error creating stock transfer:', error)
+    res.status(400).json({ error: error.message || 'Failed to create stock transfer' })
+  }
+})
+
+// GET /api/inventory/transfers - Get stock transfers for company
+router.get('/transfers', requireCompanyAccess(['products.view']), async (req, res) => {
+  try {
+    const companyId = (req as any).companyId!
+    const transfers = await InventoryService.getStockTransfers(companyId)
+    res.json(transfers)
+  } catch (error: any) {
+    console.error('Error fetching stock transfers:', error)
+    res.status(500).json({ error: error.message || 'Failed to fetch stock transfers' })
   }
 })
 

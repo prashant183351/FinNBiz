@@ -52,6 +52,7 @@ model Company {
   customers   Customer[]
   purchaseOrders PurchaseOrder[]
   subscriptions Subscription[]
+  warehouses    Warehouse[]
 
   @@map("companies")
 }
@@ -486,6 +487,7 @@ model Product {
   company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   supplier    Vendor?         @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   stockMovements StockMovement[]
+  productStocks  ProductStock[]
   productBatches ProductBatch[]
   bomItems       BillOfMaterials[] @relation("BomRawMaterial")
   finishedBoms   BillOfMaterials[] @relation("BomFinishedGood")
@@ -494,6 +496,7 @@ model Product {
   purchaseOrders PurchaseOrder[] @relation(fields: [purchaseOrderIds], references: [id])
   purchaseOrderItems PurchaseOrderItem[]
   stockAlerts StockAlert[]
+  stockTransfers StockTransfer[]
 
   @@map("products")
 }
@@ -506,8 +509,9 @@ model StockMovement {
   unitPrice   Float?
   totalValue  Float?
   reference   String?  // Invoice number, order number, etc.
-  reason      String?  // "sale", "purchase", "damage", "theft", "production", etc.
-  location    String?  // From/to location for transfers
+  reason      String?  // "sale", "purchase", "damage", "theft", "production", "transfer"
+  location    String?  // Text description for location
+  warehouseId String?  @db.ObjectId // Formal Warehouse Link
   batchNumber String?  // Specific batch being moved
   expiryDate  DateTime? // Expiry date (only relevant for "in" movements)
   performedBy String?  // User ID who performed the action
@@ -515,6 +519,7 @@ model StockMovement {
   createdAt   DateTime @default(now())
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouse Warehouse? @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
 
   @@map("stock_movements")
 }
@@ -671,6 +676,62 @@ model ProductionOrder {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("production_orders")
+}
+
+// ============================================================================
+// WAREHOUSE & MULTI-GODOWN
+// ============================================================================
+
+model Warehouse {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId   String @db.ObjectId
+  name        String
+  address     String?
+  manager     String?
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  productStocks ProductStock[]
+  movements   StockMovement[]
+  transfersFrom StockTransfer[] @relation("TransferFromWarehouse")
+  transfersTo   StockTransfer[] @relation("TransferToWarehouse")
+
+  @@map("warehouses")
+}
+
+model ProductStock {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  productId   String @db.ObjectId
+  warehouseId String @db.ObjectId
+  quantity    Float  @default(0)
+  updatedAt   DateTime @updatedAt
+
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, warehouseId])
+  @@map("product_stocks")
+}
+
+model StockTransfer {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId      String @db.ObjectId
+  productId      String @db.ObjectId
+  fromWarehouseId String @db.ObjectId
+  toWarehouseId   String @db.ObjectId
+  quantity       Float
+  status         String @default("completed") // "pending", "in_transit", "completed"
+  transferDate   DateTime @default(now())
+  notes          String?
+  performedBy    String?
+
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  fromWarehouse Warehouse @relation("TransferFromWarehouse", fields: [fromWarehouseId], references: [id], onDelete: Cascade)
+  toWarehouse   Warehouse @relation("TransferToWarehouse", fields: [toWarehouseId], references: [id], onDelete: Cascade)
+
+  @@map("stock_transfers")
 }
 
 // ============================================================================

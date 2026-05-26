@@ -32,6 +32,7 @@ export interface StockMovementData {
   expiryDate?: Date
   performedBy: string
   notes?: string
+  warehouseId?: string
 }
 
 export interface VendorData {
@@ -208,7 +209,8 @@ export class InventoryService {
         batchNumber: movement.batchNumber,
         expiryDate: movement.expiryDate,
         performedBy: movement.performedBy,
-        notes: movement.notes
+        notes: movement.notes,
+        warehouseId: movement.warehouseId
       },
       include: {
         product: {
@@ -216,6 +218,47 @@ export class InventoryService {
         }
       }
     })
+
+    // Update ProductStock running count for Warehouse if warehouseId is provided
+    if (movement.warehouseId) {
+      const existingStock = await prisma.productStock.findUnique({
+        where: {
+          productId_warehouseId: {
+            productId: movement.productId,
+            warehouseId: movement.warehouseId
+          }
+        }
+      })
+
+      let newQty = 0
+      if (movement.type === 'in') {
+        newQty = (existingStock?.quantity || 0) + movement.quantity
+      } else if (movement.type === 'out') {
+        newQty = Math.max(0, (existingStock?.quantity || 0) - movement.quantity)
+      } else if (movement.type === 'adjustment') {
+        newQty = movement.quantity
+      } else if (movement.type === 'transfer') {
+        newQty = (existingStock?.quantity || 0) + movement.quantity
+        if (newQty < 0) newQty = 0
+      }
+
+      await prisma.productStock.upsert({
+        where: {
+          productId_warehouseId: {
+            productId: movement.productId,
+            warehouseId: movement.warehouseId
+          }
+        },
+        create: {
+          productId: movement.productId,
+          warehouseId: movement.warehouseId,
+          quantity: newQty
+        },
+        update: {
+          quantity: newQty
+        }
+      })
+    }
 
     // Batch Tracking Logic
     if (movement.batchNumber) {
@@ -282,7 +325,26 @@ export class InventoryService {
   /**
    * Get current stock level for product
    */
-  static async getCurrentStock(productId: string): Promise<number> {
+  static async getCurrentStock(productId: string, warehouseId?: string): Promise<number> {
+    if (warehouseId) {
+      const stock = await prisma.productStock.findUnique({
+        where: {
+          productId_warehouseId: {
+            productId,
+            warehouseId
+          }
+        }
+      })
+      return stock ? stock.quantity : 0
+    }
+
+    const stocks = await prisma.productStock.findMany({
+      where: { productId }
+    })
+    if (stocks.length > 0) {
+      return stocks.reduce((sum, s) => sum + s.quantity, 0)
+    }
+
     const movements = await prisma.stockMovement.findMany({
       where: { productId },
       orderBy: { createdAt: 'asc' }
@@ -983,5 +1045,146 @@ export class InventoryService {
     })
 
     return order
+  }
+
+  // ============================================================================
+  // WAREHOUSE / GODOWN MANAGEMENT
+  // ============================================================================
+
+  static async createWarehouse(
+    companyId: string,
+    data: {
+      name: string
+      address?: string
+      manager?: string
+    },
+    performedBy: string
+  ): Promise<any> {
+    const warehouse = await prisma.warehouse.create({
+      data: {
+        companyId,
+        name: data.name,
+        address: data.address,
+        manager: data.manager,
+        isActive: true
+      }
+    })
+
+    await AuditService.log({
+      userId: performedBy,
+      action: 'create',
+      resource: 'warehouse',
+      resourceId: warehouse.id,
+      details: { name: data.name },
+      success: true
+    })
+
+    return warehouse
+  }
+
+  static async getWarehouses(companyId: string): Promise<any[]> {
+    return prisma.warehouse.findMany({
+      where: { companyId, isActive: true },
+      include: {
+        productStocks: {
+          include: {
+            product: {
+              select: { name: true, sku: true, category: true }
+            }
+          }
+        }
+      },
+      orderBy: { name: 'asc' }
+    })
+  }
+
+  static async getStockTransfers(companyId: string): Promise<any[]> {
+    return prisma.stockTransfer.findMany({
+      where: { companyId },
+      include: {
+        product: { select: { name: true, sku: true } },
+        fromWarehouse: { select: { name: true } },
+        toWarehouse: { select: { name: true } }
+      },
+      orderBy: { transferDate: 'desc' }
+    })
+  }
+
+  static async createStockTransfer(
+    companyId: string,
+    data: {
+      productId: string
+      fromWarehouseId: string
+      toWarehouseId: string
+      quantity: number
+      performedBy: string
+      notes?: string
+    }
+  ): Promise<any> {
+    // Check if source warehouse has sufficient stock
+    const sourceStock = await this.getCurrentStock(data.productId, data.fromWarehouseId)
+    if (sourceStock < data.quantity) {
+      throw new Error(`Insufficient stock in source warehouse. Available: ${sourceStock}, requested: ${data.quantity}`)
+    }
+
+    // Create StockTransfer
+    const transfer = await prisma.stockTransfer.create({
+      data: {
+        companyId,
+        productId: data.productId,
+        fromWarehouseId: data.fromWarehouseId,
+        toWarehouseId: data.toWarehouseId,
+        quantity: data.quantity,
+        notes: data.notes,
+        performedBy: data.performedBy,
+        status: 'completed'
+      },
+      include: {
+        product: { select: { name: true } },
+        fromWarehouse: { select: { name: true } },
+        toWarehouse: { select: { name: true } }
+      }
+    })
+
+    // Record 'out' movement for source warehouse
+    await this.recordStockMovement({
+      productId: data.productId,
+      type: 'transfer',
+      quantity: -data.quantity,
+      warehouseId: data.fromWarehouseId,
+      reference: `TRANSFER-${transfer.id.slice(-6)}`,
+      reason: 'transfer',
+      performedBy: data.performedBy,
+      notes: `Transfer to ${transfer.toWarehouse.name}. ${data.notes || ''}`
+    })
+
+    // Record 'in' movement for destination warehouse
+    await this.recordStockMovement({
+      productId: data.productId,
+      type: 'transfer',
+      quantity: data.quantity,
+      warehouseId: data.toWarehouseId,
+      reference: `TRANSFER-${transfer.id.slice(-6)}`,
+      reason: 'transfer',
+      performedBy: data.performedBy,
+      notes: `Transfer from ${transfer.fromWarehouse.name}. ${data.notes || ''}`
+    })
+
+    // Log audit event
+    await AuditService.log({
+      userId: data.performedBy,
+      action: 'create',
+      resource: 'stock_transfer',
+      resourceId: transfer.id,
+      details: {
+        productId: data.productId,
+        fromWarehouseId: data.fromWarehouseId,
+        toWarehouseId: data.toWarehouseId,
+        quantity: data.quantity
+      },
+      success: true
+    })
+
+    return transfer
   }
 }
