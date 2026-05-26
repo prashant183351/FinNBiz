@@ -2,7 +2,7 @@ services:
   - type: web
     name: finnbiz-api
     env: node
-    buildCommand: pnpm install && pnpm --filter @finnbiz/api build
+    buildCommand: NODE_ENV=development pnpm install && pnpm --filter @finnbiz/api build
     startCommand: pnpm --filter @finnbiz/api start
     envVars:
       - key: PORT
