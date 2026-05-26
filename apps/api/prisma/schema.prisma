@@ -49,6 +49,7 @@ model Company {
   auditLogs   AuditLog[]
   products    Product[]
   vendors     Vendor[]
+  customers   Customer[]
   purchaseOrders PurchaseOrder[]
   subscriptions Subscription[]
 
@@ -528,6 +529,25 @@ model Vendor {
   purchaseOrders PurchaseOrder[]
 
   @@map("vendors")
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  companyId   String
+  name        String
+  contactPerson String?
+  email       String?
+  phone       String?
+  address     String?
+  gstin       String?
+  balance     Float    @default(0) // Opening or running balance
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("customers")
 }
 
 model PurchaseOrder {

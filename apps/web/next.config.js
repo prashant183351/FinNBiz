@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Output export is required for Capacitor mobile builds.
-  // It is conditionally enabled to not break the Desktop Electron wrapper.
-  ...(process.env.MOBILE_BUILD === 'true' && { output: 'export' }),
+  output: 'export',
   images: {
     unoptimized: true,
   },

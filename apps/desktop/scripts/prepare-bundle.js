@@ -16,11 +16,8 @@ function copyBundle() {
   fs.cpSync(path.join(ROOT_DIR, 'apps/api/node_modules'), path.join(BUNDLED_DIR, 'api/node_modules'), { recursive: true, dereference: true })
   fs.copyFileSync(path.join(ROOT_DIR, 'apps/api/package.json'), path.join(BUNDLED_DIR, 'api/package.json'))
 
-  console.log('📦 Copying Web...')
-  fs.cpSync(path.join(ROOT_DIR, 'apps/web/.next'), path.join(BUNDLED_DIR, 'web/.next'), { recursive: true, dereference: true })
-  fs.cpSync(path.join(ROOT_DIR, 'apps/web/public'), path.join(BUNDLED_DIR, 'web/public'), { recursive: true, dereference: true })
-  fs.cpSync(path.join(ROOT_DIR, 'apps/web/node_modules'), path.join(BUNDLED_DIR, 'web/node_modules'), { recursive: true, dereference: true })
-  fs.copyFileSync(path.join(ROOT_DIR, 'apps/web/package.json'), path.join(BUNDLED_DIR, 'web/package.json'))
+  console.log('📦 Copying Web (Static Export)...')
+  fs.cpSync(path.join(ROOT_DIR, 'apps/web/out'), path.join(BUNDLED_DIR, 'web'), { recursive: true, dereference: true })
 
   console.log('✅ Bundling complete!')
 }

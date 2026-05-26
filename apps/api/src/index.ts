@@ -18,6 +18,8 @@ import paymentRoutes from './routes/payment'
 import invoiceRoutes from './routes/invoices'
 import vendorsRoutes from './routes/vendors'
 import purchasesRoutes from './routes/purchases'
+import importRoutes from './routes/import'
+import backupRoutes from './routes/backups'
 import { authenticateToken } from './middleware/auth'
 import { auditLogger } from './middleware/audit'
 import { PermissionsService } from './services/permissions.service'
@@ -61,6 +63,8 @@ app.use('/api/payment', paymentRoutes)
 app.use('/api/invoices', invoiceRoutes)
 app.use('/api/vendors', vendorsRoutes)
 app.use('/api/purchases', purchasesRoutes)
+app.use('/api/import', importRoutes)
+app.use('/api/backups', backupRoutes)
 
 // Apply audit logging to all API routes (except auth)
 app.use('/api', auditLogger({

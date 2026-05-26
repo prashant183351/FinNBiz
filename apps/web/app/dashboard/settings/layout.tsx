@@ -12,7 +12,9 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const tabs = [
     { name: language === 'hi' ? 'कंपनी प्रोफ़ाइल' : 'Company Profile', href: '/dashboard/settings/profile', icon: '🏢' },
     { name: language === 'hi' ? 'उपयोगकर्ता' : 'Users & Roles', href: '/dashboard/settings/users', icon: '👥' },
-    { name: language === 'hi' ? 'ऑडिट लॉग' : 'Audit Logs', href: '/dashboard/settings/audit', icon: '📋' }
+    { name: language === 'hi' ? 'ऑडिट लॉग' : 'Audit Logs', href: '/dashboard/settings/audit', icon: '📋' },
+    { name: language === 'hi' ? 'बैकअप और सिंक' : 'Backup & Sync', href: '/dashboard/settings/backup', icon: '☁️' },
+    { name: language === 'hi' ? 'डेटा इम्पोर्ट' : 'Data Import', href: '/dashboard/settings/data-import', icon: '📥' }
   ]
 
   return (

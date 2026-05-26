@@ -2,6 +2,7 @@ const { app, BrowserWindow } = require('electron')
 const { spawn } = require('child_process')
 const path = require('path')
 const http = require('http')
+const fs = require('fs')
 
 let mainWindow = null
 let apiProcess = null
@@ -49,22 +50,71 @@ function startServers() {
   apiProcess.stdout.on('data', (data) => console.log(`[API]: ${data}`))
   apiProcess.stderr.on('data', (data) => console.error(`[API ERROR]: ${data}`))
 
-  console.log('⚡ [Electron/Supervisor] Booting background Next.js Web server...')
-  webProcess = spawn('node', [
-    webEntry,
-    'start',
-    '-p',
-    NEXT_PORT
-  ], {
-    cwd: webDir,
-    env: { ...process.env, PORT: NEXT_PORT }
-  })
+  console.log('⚡ [Electron/Supervisor] Booting internal static web server...')
+  webProcess = serveStatic(webDir, NEXT_PORT)
+}
 
-  webProcess.stdout.on('data', (data) => console.log(`[WEB]: ${data}`))
-  webProcess.stderr.on('data', (data) => console.error(`[WEB ERROR]: ${data}`))
+function serveStatic(webDir, port) {
+  const mimeTypes = {
+    '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
+    '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg',
+    '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.woff2': 'font/woff2',
+    '.txt': 'text/plain', '.webp': 'image/webp'
+  };
+  
+  const server = http.createServer((req, res) => {
+    let urlPath = req.url.split('?')[0];
+    if (urlPath === '/') urlPath = '/index.html';
+    
+    // Prevent directory traversal
+    urlPath = path.normalize(urlPath).replace(/^(\.\.[\/\\])+/, '');
+    
+    let filePath = path.join(webDir, urlPath);
+    
+    // Handle Next.js clean URLs by appending .html
+    if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+      if (fs.existsSync(filePath + '.html')) {
+        filePath += '.html';
+      } else if (fs.existsSync(path.join(filePath, 'index.html'))) {
+        filePath = path.join(filePath, 'index.html');
+      } else {
+        filePath = path.join(webDir, '404.html');
+      }
+    }
+    
+    const extname = path.extname(filePath).toLowerCase();
+    const contentType = mimeTypes[extname] || 'application/octet-stream';
+    
+    fs.readFile(filePath, (error, content) => {
+      if (error) {
+        res.writeHead(404);
+        res.end('Not Found');
+      } else {
+        res.writeHead(200, { 'Content-Type': contentType });
+        res.end(content, 'utf-8');
+      }
+    });
+  });
+  
+  server.listen(port, '127.0.0.1');
+  return server;
 }
 
 function getLoadingHTML() {
+  let logoB64 = '';
+  try {
+    const logoPath = path.join(__dirname, 'build/logo.jpg');
+    if (fs.existsSync(logoPath)) {
+      logoB64 = 'data:image/jpeg;base64,' + fs.readFileSync(logoPath, 'base64');
+    }
+  } catch (e) {
+    console.error('Failed to load logo image:', e);
+  }
+
+  const logoHtml = logoB64 
+    ? `<img src="${logoB64}" class="app-logo" alt="FinNBiz Logo">`
+    : `<div class="logo">FinNBiz</div><div class="tagline">Desktop Ledger Suite</div>`;
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -72,7 +122,7 @@ function getLoadingHTML() {
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background: #020617;
+      background: #020617; /* Very dark slate, almost black */
       color: #e2e8f0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       display: flex;
@@ -82,17 +132,23 @@ function getLoadingHTML() {
       height: 100vh;
       gap: 24px;
     }
+    .app-logo {
+      width: 240px;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(132, 204, 22, 0.2);
+    }
     .logo {
       font-size: 36px;
       font-weight: 800;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: linear-gradient(135deg, #84cc16, #a3e635); /* Bright green */
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       letter-spacing: -1px;
     }
     .tagline {
       font-size: 14px;
-      color: #64748b;
+      color: #94a3b8;
       letter-spacing: 2px;
       text-transform: uppercase;
     }
@@ -100,20 +156,20 @@ function getLoadingHTML() {
       width: 40px;
       height: 40px;
       border: 3px solid #1e293b;
-      border-top-color: #6366f1;
+      border-top-color: #84cc16; /* Bright green */
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     .status {
-      font-size: 13px;
-      color: #475569;
+      font-size: 14px;
+      color: #84cc16; /* Bright green */
+      font-weight: 500;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <div class="logo">FinNBiz</div>
-  <div class="tagline">Desktop Ledger Suite</div>
+  ${logoHtml}
   <div class="spinner"></div>
   <div class="status">Starting services, please wait...</div>
 </body>
@@ -170,9 +226,9 @@ app.on('window-all-closed', () => {
   }
   if (webProcess) {
     try {
-      webProcess.kill()
+      webProcess.close()
     } catch (e) {
-      console.error('Failed to kill Web process:', e)
+      console.error('Failed to close Web server:', e)
     }
   }
   if (process.platform !== 'darwin') app.quit()
