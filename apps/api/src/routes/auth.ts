@@ -84,7 +84,11 @@ router.post('/login', async (req, res) => {
       }
     })
 
-    if (!userWithPassword || !userWithPassword.password) {
+    if (!userWithPassword) {
+      return res.status(404).json({ error: 'user_not_found' })
+    }
+
+    if (!userWithPassword.password) {
       return res.status(401).json({ error: 'Invalid credentials' })
     }
 

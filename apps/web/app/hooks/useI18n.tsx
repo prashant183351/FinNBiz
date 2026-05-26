@@ -46,6 +46,7 @@ const translations: Translations = {
     'error.invalid_pan': 'Please enter a valid 10-character Indian PAN',
     'error.password_length': 'Password must be at least 6 characters',
     'error.login_failed': 'Invalid email or password. Please try again.',
+    'error.user_not_found': 'Account not found. Please create a new account.',
     'error.register_failed': 'Failed to register. User may already exist.',
     'error.company_failed': 'Failed to save company setup.',
     
@@ -173,6 +174,7 @@ const translations: Translations = {
     'error.invalid_pan': 'कृपया एक वैध 10-वर्णों का भारतीय PAN दर्ज करें',
     'error.password_length': 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए',
     'error.login_failed': 'अमान्य ईमेल या पासवर्ड। कृपया पुनः प्रयास करें।',
+    'error.user_not_found': 'खाता नहीं मिला। कृपया पहले नया खाता बनाएँ।',
     'error.register_failed': 'पंजीकरण विफल। शायद यह उपयोगकर्ता पहले से मौजूद है।',
     'error.company_failed': 'कंपनी सेटअप सहेजने में विफल।',
     
