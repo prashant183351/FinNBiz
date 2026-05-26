@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "mongodb"
+  url = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id String @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
   name      String?
   password  String?
@@ -31,7 +31,7 @@ model User {
 }
 
 model Company {
-  id        String   @id @default(cuid())
+  id String @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   gstin     String?  @unique
   pan       String?  @unique
@@ -57,7 +57,7 @@ model Company {
 }
 
 model Role {
-  id          String   @id @default(cuid())
+  id String @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
   description String?
   createdAt   DateTime @default(now())
@@ -70,10 +70,10 @@ model Role {
 }
 
 model Membership {
-  id        String   @id @default(cuid())
-  userId    String
-  companyId String
-  roleId    String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String @db.ObjectId
+  companyId String @db.ObjectId
+  roleId    String @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -86,8 +86,8 @@ model Membership {
 }
 
 model Invoice {
-  id             String   @id @default(cuid())
-  companyId      String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId      String @db.ObjectId
   invoiceNumber  String   @unique
   customerName   String
   customerGSTIN  String?
@@ -115,8 +115,8 @@ model Invoice {
 }
 
 model InvoiceItem {
-  id          String  @id @default(cuid())
-  invoiceId   String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceId   String @db.ObjectId
   description String
   hsnCode     String?
   quantity    Float
@@ -133,8 +133,8 @@ model InvoiceItem {
 }
 
 model Expense {
-  id          String   @id @default(cuid())
-  companyId   String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId   String @db.ObjectId
   date        DateTime
   description String
   category    String   // e.g., "Office Supplies", "Travel", "Utilities", etc.
@@ -154,9 +154,9 @@ model Expense {
 
 // HR & Payroll Models
 model Employee {
-  id            String   @id @default(cuid())
-  companyId     String
-  employeeId    String?  @unique // Custom employee ID like "EMP001"
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId     String @db.ObjectId
+  employeeId    String? @db.ObjectId  @unique // Custom employee ID like "EMP001"
   name          String
   phone         String?
   email         String?
@@ -187,8 +187,8 @@ model Employee {
 }
 
 model Attendance {
-  id         String   @id @default(cuid())
-  employeeId String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId String @db.ObjectId
   date       DateTime
   status     String   // Present, Absent, Half, Leave, Holiday
   checkIn    DateTime?
@@ -206,8 +206,8 @@ model Attendance {
 }
 
 model Payroll {
-  id            String   @id @default(cuid())
-  employeeId    String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId    String @db.ObjectId
   month         Int      // 1-12
   year          Int
   basicSalary   Float
@@ -225,7 +225,7 @@ model Payroll {
   paid          Boolean  @default(false)
   paymentDate   DateTime?
   paymentMethod String?  // UPI, Bank Transfer, Cash
-  transactionId String?
+  transactionId String? @db.ObjectId
   payslipUrl    String?  // URL to generated payslip PDF
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -237,8 +237,8 @@ model Payroll {
 }
 
 model Advance {
-  id          String   @id @default(cuid())
-  employeeId  String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId  String @db.ObjectId
   amount      Float
   reason      String?
   approved    Boolean  @default(false)
@@ -258,8 +258,8 @@ model Advance {
 
 // Financial Ledger Models
 model Transaction {
-  id          String   @id @default(cuid())
-  companyId   String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId   String @db.ObjectId
   type        String   // "income", "expense", "transfer"
   amount      Float
   description String
@@ -280,9 +280,9 @@ model Transaction {
 }
 
 model LedgerEntry {
-  id          String   @id @default(cuid())
-  companyId   String
-  transactionId String?
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId   String @db.ObjectId
+  transactionId String? @db.ObjectId
   date        DateTime @default(now())
   account     String   // e.g. "Cash", "Sales", "Expense", "Bank Account"
   accountType String   // "asset", "liability", "equity", "income", "expense"
@@ -303,8 +303,8 @@ model LedgerEntry {
 
 // Financial Reports Cache
 model FinancialReport {
-  id        String   @id @default(cuid())
-  companyId String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId String @db.ObjectId
   type      String   // "profit_loss", "balance_sheet", "cash_flow"
   period    String   // "monthly", "quarterly", "yearly"
   year      Int
@@ -323,8 +323,8 @@ model FinancialReport {
 
 // Security & Admin Models
 model TwoFactor {
-  id          String   @id @default(cuid())
-  userId      String   @unique
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String @db.ObjectId   @unique
   type        String   // "totp", "sms", "email"
   secret      String?  // For TOTP
   backupCodes String   @default("[]") // Encrypted backup codes
@@ -340,9 +340,9 @@ model TwoFactor {
 }
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  userId      String?
-  companyId   String?
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String? @db.ObjectId
+  companyId   String? @db.ObjectId
   action      String   // "create", "update", "delete", "login", "logout", "view"
   resource    String   // "user", "company", "invoice", "expense", etc.
   resourceId  String?
@@ -359,7 +359,7 @@ model AuditLog {
 }
 
 model Permission {
-  id          String   @id @default(cuid())
+  id String @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
   description String?
   module      String   // "users", "companies", "invoices", "expenses", "reports", etc.
@@ -373,9 +373,9 @@ model Permission {
 }
 
 model RolePermission {
-  id           String   @id @default(cuid())
-  roleId       String
-  permissionId String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  roleId       String @db.ObjectId
+  permissionId String @db.ObjectId
   createdAt    DateTime @default(now())
 
   role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -386,7 +386,7 @@ model RolePermission {
 }
 
 model Backup {
-  id          String   @id @default(cuid())
+  id String @id @default(auto()) @map("_id") @db.ObjectId
   filename    String
   size        BigInt
   checksum    String
@@ -403,8 +403,8 @@ model Backup {
 
 // Enhanced HR & Payroll Models
 model Leave {
-  id          String   @id @default(cuid())
-  employeeId  String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId  String @db.ObjectId
   type        String   // "casual", "sick", "earned", "maternity", "paternity"
   startDate   DateTime
   endDate     DateTime
@@ -423,8 +423,8 @@ model Leave {
 }
 
 model Incentive {
-  id          String   @id @default(cuid())
-  employeeId  String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId  String @db.ObjectId
   type        String   // "overtime", "bonus", "commission", "performance"
   amount      Float
   description String?
@@ -441,8 +441,8 @@ model Incentive {
 }
 
 model ComplianceRecord {
-  id         String   @id @default(cuid())
-  employeeId String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId String @db.ObjectId
   type       String   // "pf", "esi", "tds"
   month      Int
   year       Int
@@ -462,8 +462,8 @@ model ComplianceRecord {
 
 // Inventory & Stock Models
 model Product {
-  id          String   @id @default(cuid())
-  companyId   String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId   String @db.ObjectId
   name        String
   description String?
   sku         String?  @unique // Stock Keeping Unit
@@ -476,7 +476,7 @@ model Product {
   costPrice   Float    @default(0)
   sellingPrice Float?  // For sales integration
   location    String?  // Warehouse location
-  supplierId  String?
+  supplierId  String? @db.ObjectId
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -484,7 +484,8 @@ model Product {
   company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   supplier    Vendor?         @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   stockMovements StockMovement[]
-  purchaseOrders PurchaseOrder[]
+  purchaseOrderIds String[] @db.ObjectId
+  purchaseOrders PurchaseOrder[] @relation(fields: [purchaseOrderIds], references: [id])
   purchaseOrderItems PurchaseOrderItem[]
   stockAlerts StockAlert[]
 
@@ -492,8 +493,8 @@ model Product {
 }
 
 model StockMovement {
-  id          String   @id @default(cuid())
-  productId   String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  productId   String @db.ObjectId
   type        String   // "in", "out", "adjustment", "transfer"
   quantity    Float
   unitPrice   Float?
@@ -511,8 +512,8 @@ model StockMovement {
 }
 
 model Vendor {
-  id          String   @id @default(cuid())
-  companyId   String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId   String @db.ObjectId
   name        String
   contactPerson String?
   email       String?
@@ -532,8 +533,8 @@ model Vendor {
 }
 
 model Customer {
-  id          String   @id @default(cuid())
-  companyId   String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId   String @db.ObjectId
   name        String
   contactPerson String?
   email       String?
@@ -551,9 +552,9 @@ model Customer {
 }
 
 model PurchaseOrder {
-  id          String   @id @default(cuid())
-  companyId   String
-  vendorId    String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId   String @db.ObjectId
+  vendorId    String @db.ObjectId
   orderNumber String   @unique
   status      String   @default("draft") // "draft", "sent", "confirmed", "received", "cancelled"
   orderDate   DateTime @default(now())
@@ -570,15 +571,16 @@ model PurchaseOrder {
   company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
   vendor      Vendor             @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   items       PurchaseOrderItem[]
-  products    Product[]
+  productIds  String[] @db.ObjectId
+  products    Product[] @relation(fields: [productIds], references: [id])
 
   @@map("purchase_orders")
 }
 
 model PurchaseOrderItem {
-  id          String  @id @default(cuid())
-  orderId     String
-  productId   String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  orderId     String @db.ObjectId
+  productId   String @db.ObjectId
   quantity    Float
   unitPrice   Float
   totalAmount Float
@@ -593,8 +595,8 @@ model PurchaseOrderItem {
 }
 
 model StockAlert {
-  id        String   @id @default(cuid())
-  productId String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  productId String @db.ObjectId
   type      String   // "low_stock", "out_of_stock", "over_stock"
   threshold Float?   // Stock level that triggered alert
   currentStock Float?
@@ -613,7 +615,7 @@ model StockAlert {
 // ============================================================================
 
 model Plan {
-  id          String   @id @default(cuid())
+  id String @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique // "free", "starter", "pro", "premium_ai", "enterprise"
   displayName String   // "Free Tier", "Starter", "Pro", etc.
   description String?
@@ -633,10 +635,10 @@ model Plan {
 }
 
 model Subscription {
-  id            String    @id @default(cuid())
-  userId        String
-  planId        String
-  companyId     String?   // For company-specific subscriptions
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String @db.ObjectId
+  planId        String @db.ObjectId
+  companyId     String? @db.ObjectId   // For company-specific subscriptions
   status        String    @default("active") // "active", "cancelled", "expired", "past_due"
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
@@ -657,9 +659,9 @@ model Subscription {
 }
 
 model Payment {
-  id              String   @id @default(cuid())
-  subscriptionId  String?
-  userId          String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  subscriptionId  String? @db.ObjectId
+  userId          String @db.ObjectId
   amount          Float
   currency        String   @default("INR")
   status          String   @default("pending") // "pending", "completed", "failed", "refunded"
@@ -684,8 +686,8 @@ model Payment {
 }
 
 model Commission {
-  id          String   @id @default(cuid())
-  paymentId   String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  paymentId   String @db.ObjectId
   type        String   // "upi_fee", "payout_commission", "subscription_referral", "reseller_margin"
   amount      Float
   percentage  Float?   // Commission percentage
@@ -702,7 +704,7 @@ model Commission {
 }
 
 model Addon {
-  id          String   @id @default(cuid())
+  id String @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
   displayName String
   description String
@@ -722,9 +724,9 @@ model Addon {
 }
 
 model AddonPurchase {
-  id        String   @id @default(cuid())
-  userId    String
-  addonId   String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String @db.ObjectId
+  addonId   String @db.ObjectId
   status    String   @default("active") // "active", "cancelled", "expired"
   purchasedAt DateTime
   expiresAt   DateTime?
@@ -740,7 +742,7 @@ model AddonPurchase {
 }
 
 model APIEndpoint {
-  id          String   @id @default(cuid())
+  id String @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
   path        String   @unique
   method      String   // "GET", "POST", "PUT", "DELETE"
@@ -758,11 +760,11 @@ model APIEndpoint {
 }
 
 model Usage {
-  id            String   @id @default(cuid())
-  subscriptionId String?
-  userId        String
-  endpointId    String?
-  addonId       String?
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  subscriptionId String? @db.ObjectId
+  userId        String @db.ObjectId
+  endpointId    String? @db.ObjectId
+  addonId       String? @db.ObjectId
   action        String   // API endpoint called or feature used
   quantity      Int      @default(1) // Number of units consumed
   cost          Float    @default(0) // Cost incurred
@@ -777,8 +779,8 @@ model Usage {
 }
 
 model Reseller {
-  id          String   @id @default(cuid())
-  userId      String   @unique
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String @db.ObjectId   @unique
   companyName String
   gstin       String?
   pan         String?
@@ -801,8 +803,8 @@ model Reseller {
 }
 
 model WhiteLabel {
-  id          String   @id @default(cuid())
-  resellerId  String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  resellerId  String @db.ObjectId
   domain      String   @unique
   logoUrl     String?
   brandName   String
@@ -820,7 +822,7 @@ model WhiteLabel {
 }
 
 model GatewayConfig {
-  id          String   @id @default(cuid())
+  id String @id @default(auto()) @map("_id") @db.ObjectId
   gateway     String   @unique // "razorpay", "phonepe", "cashfree"
   isActive    Boolean  @default(true)
   config      String   // Encrypted gateway configuration

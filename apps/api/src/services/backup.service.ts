@@ -339,20 +339,12 @@ export class BackupService {
       throw new Error('DATABASE_URL not configured')
     }
 
-    // Parse database URL for pg_dump
-    const url = new URL(databaseUrl)
-    const host = url.hostname
-    const port = url.port
-    const database = url.pathname.slice(1)
-    const username = url.username
-    const password = url.password
-
-    const command = `pg_dump --host=${host} --port=${port} --username=${username} --dbname=${database} --no-password --format=c --compress=9 --file="${outputPath}"`
-
-    // Set password in environment
-    const env = { ...process.env, PGPASSWORD: password }
-
-    await execAsync(command, { env })
+    if (databaseUrl.startsWith('mongodb')) {
+      const command = `mongodump --uri="${databaseUrl}" --archive="${outputPath}" --gzip`
+      await execAsync(command)
+    } else {
+      throw new Error('Unsupported database type for backup')
+    }
   }
 
   private static async restoreDatabaseDump(dumpPath: string): Promise<void> {
@@ -361,20 +353,12 @@ export class BackupService {
       throw new Error('DATABASE_URL not configured')
     }
 
-    // Parse database URL for pg_restore
-    const url = new URL(databaseUrl)
-    const host = url.hostname
-    const port = url.port
-    const database = url.pathname.slice(1)
-    const username = url.username
-    const password = url.password
-
-    const command = `pg_restore --host=${host} --port=${port} --username=${username} --dbname=${database} --no-password --clean --if-exists "${dumpPath}"`
-
-    // Set password in environment
-    const env = { ...process.env, PGPASSWORD: password }
-
-    await execAsync(command, { env })
+    if (databaseUrl.startsWith('mongodb')) {
+      const command = `mongorestore --uri="${databaseUrl}" --archive="${dumpPath}" --gzip --drop`
+      await execAsync(command)
+    } else {
+      throw new Error('Unsupported database type for restore')
+    }
   }
 
   private static async generateChecksum(filePath: string): Promise<string> {

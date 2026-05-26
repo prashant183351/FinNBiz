@@ -347,7 +347,7 @@ router.get('/health', requireCompanyAccess(['admin.system']), async (req, res) =
     const prisma = new PrismaClient()
 
     // Database connection check
-    await prisma.$queryRaw`SELECT 1`
+    await prisma.user.count()
 
     // Get basic stats
     const [

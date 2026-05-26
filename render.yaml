@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: finnbiz-api
+    env: node
+    buildCommand: pnpm install && pnpm --filter @finnbiz/api build
+    startCommand: pnpm --filter @finnbiz/api start
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: NODE_ENV
+        value: production
+    autoDeploy: true
