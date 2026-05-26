@@ -261,7 +261,8 @@ router.put('/alerts/:alertId/resolve', requireCompanyAccess(['products.manage'])
 router.get('/reports/valuation', requireCompanyAccess(['reports.view']), async (req, res) => {
   try {
     const companyId = (req as any).companyId!
-    const report = await InventoryService.getStockValuation(companyId)
+    const { method = 'average' } = req.query
+    const report = await InventoryService.getStockValuation(companyId, method as 'average' | 'fifo')
     res.json(report)
   } catch (error) {
     console.error('Error generating stock valuation report:', error)

@@ -188,6 +188,12 @@ export default function ReportsDashboardPage() {
               📄 GSTR-1
             </Link>
             <Link 
+              href="/dashboard/reports/gstr2b"
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg tracking-wide transition-all flex items-center gap-1"
+            >
+              🔄 GSTR-2B Match
+            </Link>
+            <Link 
               href="/dashboard/reports/gstr3b"
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg tracking-wide transition-all flex items-center gap-1"
             >

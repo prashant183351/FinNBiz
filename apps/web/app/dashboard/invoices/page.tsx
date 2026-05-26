@@ -121,12 +121,20 @@ export default function InvoicesListPage() {
             <span className="text-lg font-bold text-white">{trans.title}</span>
           </div>
 
-          <Link
-            href="/dashboard/invoices/new"
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-lg tracking-wide shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
-          >
-            + {trans.newBtn}
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard/invoices/reminders"
+              className="px-4 py-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-bold rounded-lg tracking-wide transition-all flex items-center gap-1.5"
+            >
+              💰 {language === 'hi' ? 'उधारी और कलेक्शन' : 'Outstanding Ledger'}
+            </Link>
+            <Link
+              href="/dashboard/invoices/new"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-lg tracking-wide shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
+            >
+              + {trans.newBtn}
+            </Link>
+          </div>
         </div>
       </header>
 

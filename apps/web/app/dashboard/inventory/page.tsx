@@ -540,6 +540,12 @@ export default function InventoryDashboardPage() {
             >
               🏢 {language === 'hi' ? 'गोदाम (Warehouses)' : 'Warehouses'}
             </Link>
+            <Link
+              href="/dashboard/inventory/stickers"
+              className="px-4 py-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-300 hover:text-white text-xs font-bold rounded-lg tracking-wide transition-all flex items-center gap-1.5"
+            >
+              🏷️ {language === 'hi' ? 'बारकोड प्रिंटर' : 'Barcode Stickers'}
+            </Link>
             <button
               onClick={() => setShowProductModal(true)}
               className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-lg tracking-wide shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all"

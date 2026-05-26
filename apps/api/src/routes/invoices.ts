@@ -670,4 +670,157 @@ router.put('/:id/e-waybill/vehicle', authenticateToken, async (req, res) => {
   }
 })
 
+// POST /api/invoices/:id/e-invoice - Generate NIC/GSTN E-Invoice
+router.post('/:id/e-invoice', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      include: { company: true }
+    })
+
+    if (!invoice) {
+      return res.status(404).json({ error: 'Invoice not found' })
+    }
+
+    if (invoice.documentType !== 'invoice') {
+      return res.status(400).json({ error: 'Only Tax Invoices can be registered for E-Invoicing.' })
+    }
+
+    if (invoice.irn) {
+      return res.status(400).json({ error: 'E-Invoice has already been registered for this invoice.' })
+    }
+
+    // Simulate IRN (64-character hash)
+    const simulatedIRN = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')
+
+    // Update database
+    const updated = await prisma.invoice.update({
+      where: { id },
+      data: {
+        irn: simulatedIRN,
+        status: 'finalized'
+      }
+    })
+
+    res.status(200).json({
+      success: true,
+      irn: updated.irn,
+      status: updated.status,
+      message: 'Simulated NIC/GST Portal E-Invoice Registration Successful!'
+    })
+  } catch (error: any) {
+    console.error('Error generating E-Invoice:', error)
+    res.status(500).json({ error: 'Failed to generate E-Invoice' })
+  }
+})
+
+// POST /api/invoices/:id/e-waybill - Generate NIC E-Way Bill
+router.post('/:id/e-waybill', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { transporterId, vehicleNumber, distance } = req.body
+
+    if (!transporterId || !vehicleNumber || !distance) {
+      return res.status(400).json({ error: 'Transporter ID, Vehicle Number, and Distance are required.' })
+    }
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id }
+    })
+
+    if (!invoice) {
+      return res.status(404).json({ error: 'Invoice not found' })
+    }
+
+    if (invoice.ewayBillNumber) {
+      return res.status(400).json({ error: 'E-Way Bill has already been generated for this invoice.' })
+    }
+
+    // Simulate 12-digit E-Way Bill Number
+    const simulatedEwayBill = Math.floor(100000000000 + Math.random() * 900000000000).toString()
+
+    // Update database
+    const updated = await prisma.invoice.update({
+      where: { id },
+      data: {
+        ewayBillNumber: simulatedEwayBill,
+        ewayTransporterId: transporterId,
+        ewayVehicleNumber: vehicleNumber,
+        ewayDistance: parseFloat(distance)
+      }
+    })
+
+    res.status(200).json({
+      success: true,
+      ewayBillNumber: updated.ewayBillNumber,
+      ewayTransporterId: updated.ewayTransporterId,
+      ewayVehicleNumber: updated.ewayVehicleNumber,
+      ewayDistance: updated.ewayDistance,
+      message: 'Simulated NIC E-Way Bill Generation Successful!'
+    })
+  } catch (error: any) {
+    console.error('Error generating E-Way Bill:', error)
+    res.status(500).json({ error: 'Failed to generate E-Way Bill' })
+  }
+})
+
+// GET /api/invoices/outstanding - Get all outstanding customer balances and bills
+router.get('/reports/outstanding', authenticateToken, requireCompanyAccess(['reports.view']), async (req, res) => {
+  try {
+    const companyId = req.query.companyId as string
+
+    // Get all unpaid tax invoices
+    const unpaidInvoices = await prisma.invoice.findMany({
+      where: {
+        companyId,
+        status: 'finalized',
+        documentType: 'invoice'
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    // Get customer profiles to match credit limits
+    const customers = await prisma.customer.findMany({
+      where: { companyId, active: true }
+    })
+
+    // Group invoices by customer
+    const outstandingMap = new Map<string, any>()
+
+    for (const inv of unpaidInvoices) {
+      const customerName = inv.customerName
+      const profile = customers.find(c => c.name.toLowerCase() === customerName.toLowerCase())
+      
+      if (!outstandingMap.has(customerName)) {
+        outstandingMap.set(customerName, {
+          customerName,
+          customerGSTIN: inv.customerGSTIN,
+          totalOutstanding: 0,
+          invoiceCount: 0,
+          creditLimit: profile?.creditLimit || null,
+          customerType: profile?.customerType || 'retail',
+          invoices: []
+        })
+      }
+
+      const entry = outstandingMap.get(customerName)
+      entry.totalOutstanding += inv.totalAmount
+      entry.invoiceCount += 1
+      entry.invoices.push({
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        totalAmount: inv.totalAmount,
+        createdAt: inv.createdAt
+      })
+    }
+
+    res.json(Array.from(outstandingMap.values()))
+  } catch (error: any) {
+    console.error('Error fetching outstanding reports:', error)
+    res.status(500).json({ error: 'Failed to fetch outstanding reports' })
+  }
+})
+
 export default router

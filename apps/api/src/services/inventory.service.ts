@@ -787,7 +787,7 @@ export class InventoryService {
   /**
    * Generate stock valuation report
    */
-  static async getStockValuation(companyId: string): Promise<any> {
+  static async getStockValuation(companyId: string, method: 'average' | 'fifo' = 'average'): Promise<any> {
     const products = await prisma.product.findMany({
       where: { companyId, active: true }
     })
@@ -798,7 +798,34 @@ export class InventoryService {
 
     for (const product of products) {
       const currentStock = await this.getCurrentStock(product.id)
-      const value = currentStock * (product.costPrice || 0)
+      let value = 0
+
+      if (method === 'fifo') {
+        const inMovements = await prisma.stockMovement.findMany({
+          where: { productId: product.id, type: 'in' },
+          orderBy: { createdAt: 'desc' }
+        })
+
+        let neededQty = currentStock
+        let productValuation = 0
+
+        for (const move of inMovements) {
+          if (neededQty <= 0) break
+
+          const qtyToTake = Math.min(neededQty, move.quantity)
+          const price = move.unitPrice || product.costPrice || 0
+          productValuation += qtyToTake * price
+          neededQty -= qtyToTake
+        }
+
+        if (neededQty > 0) {
+          productValuation += neededQty * (product.costPrice || 0)
+        }
+        value = productValuation
+      } else {
+        // Default to average (currentStock * costPrice)
+        value = currentStock * (product.costPrice || 0)
+      }
 
       valuation.push({
         product: {
@@ -820,7 +847,8 @@ export class InventoryService {
       summary: {
         totalProducts: products.length,
         totalItems,
-        totalValue
+        totalValue,
+        method
       },
       valuation: valuation.sort((a, b) => b.totalValue - a.totalValue)
     }

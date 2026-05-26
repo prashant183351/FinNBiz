@@ -2,8 +2,10 @@ import express, { Router } from 'express'
 import { Queue } from 'bullmq'
 import { createClient as createRedisClient } from 'redis'
 import { FinancialService } from '../services/financial.service'
+import { PrismaClient } from '@prisma/client'
 
 const router: Router = Router()
+const prisma = new PrismaClient()
 const redis = createRedisClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' })
 const reportQueue = new Queue('report-calculations', { connection: redis as any })
 
@@ -469,6 +471,119 @@ router.get('/gstr3b', async (req, res) => {
   } catch (error: any) {
     console.error('Error generating GSTR-3B data:', error)
     res.status(500).json({ error: 'Failed to generate GSTR-3B data' })
+  }
+})
+
+// POST /api/reports/gstr2b - Reconcile uploaded GSTR-2B file with purchase book
+router.post('/gstr2b', async (req, res) => {
+  try {
+    const { companyId } = req.query
+    const { portalInvoices = [] } = req.body
+
+    if (!companyId || typeof companyId !== 'string') {
+      return res.status(400).json({ error: 'Company ID is required' })
+    }
+
+    // Fetch our recorded Purchase Orders (received/confirmed bills)
+    const purchaseOrders = await prisma.purchaseOrder.findMany({
+      where: {
+        companyId,
+        status: { in: ['received', 'confirmed'] }
+      },
+      include: {
+        vendor: { select: { name: true, gstin: true } }
+      }
+    })
+
+    const matchedResults: any[] = []
+    const poMatchedIds = new Set<string>()
+
+    // Walk through portal invoices and match against books
+    for (const pInv of portalInvoices) {
+      const gstin = pInv.gstin?.trim().toUpperCase()
+      const invNum = pInv.invoiceNumber?.trim().toUpperCase()
+      const taxableValue = parseFloat(pInv.taxableValue || '0')
+
+      // Look for a purchase order that matches the invoice number and supplier GSTIN
+      const po = purchaseOrders.find((o: any) => 
+        o.orderNumber.trim().toUpperCase() === invNum ||
+        (o.vendor.gstin && o.vendor.gstin.trim().toUpperCase() === gstin)
+      )
+
+      if (po) {
+        poMatchedIds.add(po.id)
+        const poTaxable = po.totalAmount
+        const diff = Math.abs(poTaxable - taxableValue)
+        const isMatched = diff < (poTaxable * 0.1) // 10% tolerance
+
+        if (isMatched) {
+          matchedResults.push({
+            id: po.id,
+            customerName: po.vendor.name,
+            gstin: po.vendor.gstin || gstin,
+            invoiceNumber: invNum,
+            portalTaxable: taxableValue,
+            booksTaxable: poTaxable,
+            status: 'MATCHED',
+            message: 'Invoice fully matched. Input Tax Credit is eligible.'
+          })
+        } else {
+          matchedResults.push({
+            id: po.id,
+            customerName: po.vendor.name,
+            gstin: po.vendor.gstin || gstin,
+            invoiceNumber: invNum,
+            portalTaxable: taxableValue,
+            booksTaxable: poTaxable,
+            status: 'TAX_MISMATCH',
+            message: `Tax/Value mismatch. Books show ₹${poTaxable}, Portal shows ₹${taxableValue}.`
+          })
+        }
+      } else {
+        // Missing in Books
+        matchedResults.push({
+          id: null,
+          customerName: pInv.supplierName || 'Unknown Supplier',
+          gstin,
+          invoiceNumber: invNum,
+          portalTaxable: taxableValue,
+          booksTaxable: 0,
+          status: 'MISSING_IN_BOOKS',
+          message: 'Found on GST Portal, but missing in your FinNBiz purchase records.'
+        })
+      }
+    }
+
+    // Walk through books and identify missing in portal (Unclaimed ITC)
+    for (const po of purchaseOrders) {
+      if (!poMatchedIds.has(po.id)) {
+        matchedResults.push({
+          id: po.id,
+          customerName: po.vendor.name,
+          gstin: po.vendor.gstin || 'Unknown',
+          invoiceNumber: po.orderNumber,
+          portalTaxable: 0,
+          booksTaxable: po.totalAmount,
+          status: 'MISSING_IN_PORTAL',
+          message: 'Recorded in books, but missing from GST portal! Ask supplier to file.'
+        })
+      }
+    }
+
+    // Summarize results
+    const summary = {
+      matchedCount: matchedResults.filter(r => r.status === 'MATCHED').length,
+      taxMismatchCount: matchedResults.filter(r => r.status === 'TAX_MISMATCH').length,
+      missingBooksCount: matchedResults.filter(r => r.status === 'MISSING_IN_BOOKS').length,
+      missingPortalCount: matchedResults.filter(r => r.status === 'MISSING_IN_PORTAL').length,
+      totalMatchedITC: matchedResults.filter(r => r.status === 'MATCHED').reduce((sum, r) => sum + r.portalTaxable, 0),
+      totalUnclaimedITC: matchedResults.filter(r => r.status === 'MISSING_IN_PORTAL').reduce((sum, r) => sum + r.booksTaxable, 0)
+    }
+
+    res.json({ summary, results: matchedResults })
+  } catch (error: any) {
+    console.error('Error in GSTR-2B reconciliation:', error)
+    res.status(500).json({ error: 'Failed to process GSTR-2B reconciliation' })
   }
 })
 
