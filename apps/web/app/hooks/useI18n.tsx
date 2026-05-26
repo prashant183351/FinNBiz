@@ -166,7 +166,26 @@ const translations: Translations = {
     'hr.attendance.title': 'Daily Attendance',
     'hr.attendance.desc': 'Mark daily presence, track half-days and monitor staff availability.',
     'hr.payroll.title': 'Payroll Processing',
-    'hr.payroll.desc': 'Generate salaries and view net pay for selected month.'
+    'hr.payroll.desc': 'Generate salaries and view net pay for selected month.',
+    
+    'recon.title': 'Bank Reconciliation',
+    'recon.subtitle': 'Match your uploaded bank statement transactions against logged system expenses.',
+    'recon.upload': 'Paste CSV Data',
+    'recon.match_btn': 'Auto-Match by AI',
+    'recon.confirm': 'Confirm Match',
+    'recon.unmatched_bank': 'Unmatched Bank Transactions',
+    'recon.unmatched_sys': 'Unmatched System Expenses',
+    
+    'analytics.title': 'Financial Analytics & AI',
+    'analytics.subtitle': 'View P&L, Balance Sheet, and AI insights of your expenses.',
+    'analytics.tab_overview': 'Overview',
+    'analytics.tab_pl': 'Profit & Loss',
+    'analytics.tab_bs': 'Balance Sheet',
+    'analytics.tab_cash': 'Cash Flow',
+    'analytics.ai_insights': 'AI Expense Trends',
+    'analytics.income': 'Total Income',
+    'analytics.expense': 'Total Expenses',
+    'analytics.profit': 'Net Profit / Loss'
   },
   hi: {
     'brand.name': 'फ़िनएन्बिज़ (FinNbiz)',
@@ -323,7 +342,26 @@ const translations: Translations = {
     'hr.attendance.title': 'दैनिक उपस्थिति (Attendance)',
     'hr.attendance.desc': 'दैनिक उपस्थिति दर्ज करें, हाफ-डे ट्रैक करें और स्टाफ की उपलब्धता देखें।',
     'hr.payroll.title': 'पेरोल प्रोसेसिंग',
-    'hr.payroll.desc': 'वेतन जनरेट करें और चयनित महीने के लिए शुद्ध वेतन (Net Pay) देखें।'
+    'hr.payroll.desc': 'वेतन जनरेट करें और चयनित महीने के लिए शुद्ध वेतन (Net Pay) देखें।',
+    
+    'recon.title': 'बैंक समाधान (Reconciliation)',
+    'recon.subtitle': 'सिस्टम में दर्ज खर्चों के साथ अपने बैंक स्टेटमेंट का मिलान करें।',
+    'recon.upload': 'CSV डेटा पेस्ट करें',
+    'recon.match_btn': 'AI द्वारा ऑटो-मिलान करें',
+    'recon.confirm': 'मिलान कन्फर्म करें',
+    'recon.unmatched_bank': 'बिना मिलान वाले बैंक ट्रांजैक्शन',
+    'recon.unmatched_sys': 'बिना मिलान वाले सिस्टम खर्च',
+    
+    'analytics.title': 'वित्तीय विश्लेषिकी और AI (Analytics)',
+    'analytics.subtitle': 'लाभ-हानि, बैलेंस शीट और खर्चों के AI अंतर्दृष्टि देखें।',
+    'analytics.tab_overview': 'सार (Overview)',
+    'analytics.tab_pl': 'लाभ और हानि (P&L)',
+    'analytics.tab_bs': 'बैलेंस शीट',
+    'analytics.tab_cash': 'कैश फ्लो',
+    'analytics.ai_insights': 'AI खर्च रुझान',
+    'analytics.income': 'कुल आय (Income)',
+    'analytics.expense': 'कुल खर्च (Expenses)',
+    'analytics.profit': 'शुद्ध लाभ / हानि (Net Profit)'
   }
 }
 
