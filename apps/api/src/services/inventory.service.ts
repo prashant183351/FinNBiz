@@ -188,6 +188,14 @@ export class InventoryService {
   static async recordStockMovement(
     movement: StockMovementData
   ): Promise<any> {
+    // Skip stock movement if product is a service
+    const product = await prisma.product.findUnique({
+      where: { id: movement.productId }
+    })
+    if (product && product.isService) {
+      return { skipped: true, reason: 'Product is a service' }
+    }
+
     const stockMovement = await prisma.stockMovement.create({
       data: {
         productId: movement.productId,

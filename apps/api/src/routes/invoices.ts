@@ -93,6 +93,7 @@ router.post('/', authenticateToken, requireCompanyAccess(['invoices.create']), a
       companyId,
       customerName,
       customerGSTIN,
+      documentType = 'invoice',
       items = [],
       currency = 'INR',
       exchangeRate = 1.0
@@ -171,6 +172,7 @@ router.post('/', authenticateToken, requireCompanyAccess(['invoices.create']), a
           totalGST,
           totalAmount,
           status: 'draft',
+          documentType,
           currency,
           exchangeRate: parseFloat(exchangeRate as string) || 1.0,
           items: {
@@ -199,6 +201,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     const {
       customerName,
       customerGSTIN,
+      documentType,
       items = [],
       currency = 'INR',
       exchangeRate = 1.0
@@ -282,6 +285,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
           subtotal,
           totalGST,
           totalAmount,
+          ...(documentType ? { documentType } : {}),
           currency,
           exchangeRate: parseFloat(exchangeRate as string) || 1.0,
           items: {

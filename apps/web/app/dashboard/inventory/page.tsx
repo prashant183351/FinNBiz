@@ -136,6 +136,7 @@ export default function InventoryDashboardPage() {
   const [prodCost, setProdCost] = useState('')
   const [prodSelling, setProdSelling] = useState('')
   const [prodVendorId, setProdVendorId] = useState('')
+  const [prodIsService, setProdIsService] = useState(false)
 
   // Stock Movement Form State
   const [moveProdId, setMoveProdId] = useState('')
@@ -250,7 +251,8 @@ export default function InventoryDashboardPage() {
           reorderPoint: parseFloat(prodReorder) || 0,
           costPrice: parseFloat(prodCost),
           sellingPrice: prodSelling ? parseFloat(prodSelling) : undefined,
-          supplierId: prodVendorId || undefined
+          supplierId: prodVendorId || undefined,
+          isService: prodIsService
         })
       })
 
@@ -264,6 +266,7 @@ export default function InventoryDashboardPage() {
         setProdBarcode('')
         setProdCost('')
         setProdSelling('')
+        setProdIsService(false)
       } else {
         const d = await res.json()
         setFormError(d.error || 'Failed to save product.')
@@ -1040,6 +1043,19 @@ export default function InventoryDashboardPage() {
                   onChange={(e) => setProdDesc(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 outline-none"
                 />
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 border border-slate-800 p-3 rounded-lg bg-slate-900/50">
+                <input
+                  type="checkbox"
+                  id="prodIsService"
+                  checked={prodIsService}
+                  onChange={(e) => setProdIsService(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 bg-slate-950 border-slate-800 rounded focus:ring-emerald-500"
+                />
+                <label htmlFor="prodIsService" className="text-xs font-semibold text-slate-300">
+                  This is a Non-Inventory Service (E.g. Consultation, Repair)
+                </label>
               </div>
 
               <button

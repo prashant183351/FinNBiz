@@ -29,6 +29,8 @@ export default function NewInvoicePage() {
   const [loading, setLoading] = useState(false)
   const [validationError, setValidationError] = useState('')
 
+  const [documentType, setDocumentType] = useState('invoice')
+
   // Multi-Currency State variables
   const [currency, setCurrency] = useState('INR')
   const [exchangeRate, setExchangeRate] = useState(1.0)
@@ -43,6 +45,7 @@ export default function NewInvoicePage() {
         if (parsed.customerGSTIN) setCustomerGSTIN(parsed.customerGSTIN)
         if (parsed.items && parsed.items.length > 0) setItems(parsed.items)
         if (parsed.currency) setCurrency(parsed.currency)
+        if (parsed.documentType) setDocumentType(parsed.documentType)
       }
     } catch (e) {
       console.error('Failed to load invoice draft', e)
@@ -51,11 +54,11 @@ export default function NewInvoicePage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const draft = { customerName, customerGSTIN, items, currency }
+      const draft = { customerName, customerGSTIN, items, currency, documentType }
       localStorage.setItem('finnbiz_invoice_draft', JSON.stringify(draft))
     }, 500)
     return () => clearTimeout(timer)
-  }, [customerName, customerGSTIN, items, currency])
+  }, [customerName, customerGSTIN, items, currency, documentType])
   
   // Tax calculations
   const [taxSummary, setTaxSummary] = useState({
@@ -240,6 +243,7 @@ export default function NewInvoicePage() {
           companyId: activeCompany?.id,
           customerName: customerName.trim(),
           customerGSTIN: customerGSTIN.trim().toUpperCase() || undefined,
+          documentType,
           currency,
           exchangeRate: parseFloat(exchangeRate.toString()) || 1.0,
           items: items.map(item => ({
@@ -300,7 +304,24 @@ export default function NewInvoicePage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Customer Metadata Card */}
           <div className="p-6 bg-slate-900/40 border border-slate-800 rounded-2xl backdrop-blur-xl">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              
+              {/* Document Type */}
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  Document Type
+                </label>
+                <select
+                  value={documentType}
+                  onChange={(e) => setDocumentType(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-lg text-sm text-slate-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all outline-none"
+                >
+                  <option value="invoice">Tax Invoice</option>
+                  <option value="quotation">Quotation / Estimate</option>
+                  <option value="challan">Delivery Challan</option>
+                </select>
+              </div>
+
               {/* Customer Name */}
               <div className="space-y-1">
                 <div className="flex justify-between items-center">
