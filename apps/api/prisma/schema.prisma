@@ -484,6 +484,10 @@ model Product {
   company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   supplier    Vendor?         @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   stockMovements StockMovement[]
+  productBatches ProductBatch[]
+  bomItems       BillOfMaterials[] @relation("BomRawMaterial")
+  finishedBoms   BillOfMaterials[] @relation("BomFinishedGood")
+  productionOrders ProductionOrder[]
   purchaseOrderIds String[] @db.ObjectId
   purchaseOrders PurchaseOrder[] @relation(fields: [purchaseOrderIds], references: [id])
   purchaseOrderItems PurchaseOrderItem[]
@@ -500,8 +504,10 @@ model StockMovement {
   unitPrice   Float?
   totalValue  Float?
   reference   String?  // Invoice number, order number, etc.
-  reason      String?  // "sale", "purchase", "damage", "theft", etc.
+  reason      String?  // "sale", "purchase", "damage", "theft", "production", etc.
   location    String?  // From/to location for transfers
+  batchNumber String?  // Specific batch being moved
+  expiryDate  DateTime? // Expiry date (only relevant for "in" movements)
   performedBy String?  // User ID who performed the action
   notes       String?
   createdAt   DateTime @default(now())
@@ -608,6 +614,59 @@ model StockAlert {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("stock_alerts")
+}
+
+// Advanced Inventory & Manufacturing Models
+model ProductBatch {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  productId   String @db.ObjectId
+  batchNumber String
+  expiryDate  DateTime?
+  currentStock Float   @default(0)
+  status      String   @default("active") // "active", "expired"
+  createdAt   DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, batchNumber])
+  @@map("product_batches")
+}
+
+model BillOfMaterials {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  finishedGoodId String @db.ObjectId
+  rawMaterialId  String @db.ObjectId
+  quantity       Float  // Quantity of raw material needed for 1 unit of finished good
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  finishedGood Product @relation("BomFinishedGood", fields: [finishedGoodId], references: [id], onDelete: Cascade)
+  rawMaterial  Product @relation("BomRawMaterial", fields: [rawMaterialId], references: [id], onDelete: Cascade)
+
+  @@unique([finishedGoodId, rawMaterialId])
+  @@map("bill_of_materials")
+}
+
+model ProductionOrder {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  companyId      String @db.ObjectId
+  orderNumber    String   @unique
+  productId      String @db.ObjectId
+  quantity       Float
+  status         String   @default("pending") // "pending", "in_progress", "completed", "cancelled"
+  batchNumber    String?  // Assigned batch to the finished goods
+  expiryDate     DateTime?
+  startDate      DateTime?
+  completedDate  DateTime?
+  costPerUnit    Float    @default(0) // Calculated from raw materials
+  notes          String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("production_orders")
 }
 
 // ============================================================================

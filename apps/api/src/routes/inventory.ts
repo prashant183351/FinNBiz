@@ -347,4 +347,56 @@ router.post('/scan', requireCompanyAccess(['products.manage']), async (req, res)
   }
 })
 
+// ============================================================================
+// MANUFACTURING & BOM
+// ============================================================================
+
+// POST /api/inventory/bom - Create Bill of Materials
+router.post('/bom', requireCompanyAccess(['products.manage']), async (req, res) => {
+  try {
+    const { finishedGoodId, items } = req.body
+    const bom = await InventoryService.createBillOfMaterials(finishedGoodId, items)
+    res.json(bom)
+  } catch (error) {
+    console.error('Error creating BOM:', error)
+    res.status(500).json({ error: 'Failed to create Bill of Materials' })
+  }
+})
+
+// GET /api/inventory/bom/:productId - Get Bill of Materials for a product
+router.get('/bom/:productId', requireCompanyAccess(['products.view']), async (req, res) => {
+  try {
+    const { productId } = req.params
+    const bom = await InventoryService.getBillOfMaterials(productId)
+    res.json(bom)
+  } catch (error) {
+    console.error('Error fetching BOM:', error)
+    res.status(500).json({ error: 'Failed to fetch Bill of Materials' })
+  }
+})
+
+// POST /api/inventory/production - Create a Production Order
+router.post('/production', requireCompanyAccess(['products.manage']), async (req, res) => {
+  try {
+    const { productId, quantity, batchNumber, expiryDate, notes } = req.body
+    const companyId = (req as any).companyId!
+    const createdBy = (req as any).userId
+
+    const order = await InventoryService.createProductionOrder({
+      companyId,
+      productId,
+      quantity,
+      batchNumber,
+      expiryDate: expiryDate ? new Date(expiryDate) : undefined,
+      notes,
+      createdBy
+    })
+
+    res.json(order)
+  } catch (error: any) {
+    console.error('Error creating production order:', error)
+    res.status(400).json({ error: error.message || 'Failed to create production order' })
+  }
+})
+
 export default router

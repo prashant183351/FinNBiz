@@ -28,6 +28,8 @@ export interface StockMovementData {
   reference?: string
   reason?: string
   location?: string
+  batchNumber?: string
+  expiryDate?: Date
   performedBy: string
   notes?: string
 }
@@ -195,6 +197,8 @@ export class InventoryService {
         reference: movement.reference,
         reason: movement.reason,
         location: movement.location,
+        batchNumber: movement.batchNumber,
+        expiryDate: movement.expiryDate,
         performedBy: movement.performedBy,
         notes: movement.notes
       },
@@ -204,6 +208,50 @@ export class InventoryService {
         }
       }
     })
+
+    // Batch Tracking Logic
+    if (movement.batchNumber) {
+      if (movement.type === 'in') {
+        const existingBatch = await prisma.productBatch.findUnique({
+          where: {
+            productId_batchNumber: {
+              productId: movement.productId,
+              batchNumber: movement.batchNumber
+            }
+          }
+        })
+        if (existingBatch) {
+          await prisma.productBatch.update({
+            where: { id: existingBatch.id },
+            data: { currentStock: existingBatch.currentStock + movement.quantity }
+          })
+        } else {
+          await prisma.productBatch.create({
+            data: {
+              productId: movement.productId,
+              batchNumber: movement.batchNumber,
+              expiryDate: movement.expiryDate,
+              currentStock: movement.quantity
+            }
+          })
+        }
+      } else if (movement.type === 'out') {
+        const existingBatch = await prisma.productBatch.findUnique({
+          where: {
+            productId_batchNumber: {
+              productId: movement.productId,
+              batchNumber: movement.batchNumber
+            }
+          }
+        })
+        if (existingBatch) {
+          await prisma.productBatch.update({
+            where: { id: existingBatch.id },
+            data: { currentStock: Math.max(0, existingBatch.currentStock - movement.quantity) }
+          })
+        }
+      }
+    }
 
     // Log audit event
     await AuditService.log({
@@ -752,5 +800,180 @@ export class InventoryService {
     }
 
     return orders
+  }
+
+  // ============================================================================
+  // EXPIRY ALERTS
+  // ============================================================================
+
+  /**
+   * Check for expiring batches and generate alerts
+   */
+  static async checkExpiryAlerts(companyId: string): Promise<any[]> {
+    const thirtyDaysFromNow = new Date()
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
+
+    const batches = await prisma.productBatch.findMany({
+      where: {
+        product: { companyId },
+        currentStock: { gt: 0 },
+        expiryDate: { lte: thirtyDaysFromNow },
+        status: 'active'
+      },
+      include: {
+        product: true
+      }
+    })
+
+    const generatedAlerts: any[] = []
+
+    for (const batch of batches) {
+      const isExpired = batch.expiryDate && batch.expiryDate < new Date()
+      const alertType = isExpired ? 'expired' : 'expiring_soon'
+      
+      if (isExpired) {
+        await prisma.productBatch.update({
+          where: { id: batch.id },
+          data: { status: 'expired' }
+        })
+      }
+
+      const alert = await prisma.stockAlert.create({
+        data: {
+          productId: batch.productId,
+          type: alertType,
+          currentStock: batch.currentStock,
+          message: isExpired 
+            ? `Expired Batch: ${batch.batchNumber} (${batch.currentStock} units)`
+            : `Expiring Soon: Batch ${batch.batchNumber} expires on ${batch.expiryDate?.toLocaleDateString()}`
+        }
+      })
+      generatedAlerts.push(alert)
+    }
+
+    return generatedAlerts
+  }
+
+  // ============================================================================
+  // MANUFACTURING & BOM
+  // ============================================================================
+
+  static async createBillOfMaterials(
+    finishedGoodId: string,
+    items: { rawMaterialId: string, quantity: number }[]
+  ): Promise<any> {
+    // Delete existing BOM for this finished good to replace it
+    await prisma.billOfMaterials.deleteMany({
+      where: { finishedGoodId }
+    })
+
+    const bomData = items.map(item => ({
+      finishedGoodId,
+      rawMaterialId: item.rawMaterialId,
+      quantity: item.quantity
+    }))
+
+    await prisma.billOfMaterials.createMany({
+      data: bomData
+    })
+
+    return prisma.billOfMaterials.findMany({
+      where: { finishedGoodId },
+      include: {
+        rawMaterial: {
+          select: { name: true, unit: true, costPrice: true }
+        }
+      }
+    })
+  }
+
+  static async getBillOfMaterials(finishedGoodId: string): Promise<any> {
+    return prisma.billOfMaterials.findMany({
+      where: { finishedGoodId },
+      include: {
+        rawMaterial: {
+          select: { name: true, unit: true, costPrice: true, minStock: true }
+        }
+      }
+    })
+  }
+
+  static async createProductionOrder(
+    data: {
+      companyId: string,
+      productId: string,
+      quantity: number,
+      batchNumber?: string,
+      expiryDate?: Date,
+      notes?: string,
+      createdBy: string
+    }
+  ): Promise<any> {
+    const orderNumber = `PROD-${Date.now().toString().slice(-6)}`
+
+    // 1. Fetch BOM
+    const bomItems = await this.getBillOfMaterials(data.productId)
+    if (bomItems.length === 0) {
+      throw new Error('No Bill of Materials defined for this product')
+    }
+
+    // 2. Check if enough raw materials exist
+    let totalCost = 0
+    for (const bom of bomItems) {
+      const requiredQty = bom.quantity * data.quantity
+      const currentStock = await this.getCurrentStock(bom.rawMaterialId)
+      if (currentStock < requiredQty) {
+        throw new Error(`Insufficient stock for raw material: ${bom.rawMaterial.name}. Need ${requiredQty}, have ${currentStock}`)
+      }
+      totalCost += (requiredQty * (bom.rawMaterial.costPrice || 0))
+    }
+
+    const costPerUnit = data.quantity > 0 ? (totalCost / data.quantity) : 0
+
+    // 3. Create Production Order
+    const order = await prisma.productionOrder.create({
+      data: {
+        companyId: data.companyId,
+        orderNumber,
+        productId: data.productId,
+        quantity: data.quantity,
+        status: 'completed', // Auto-completing for now
+        batchNumber: data.batchNumber,
+        expiryDate: data.expiryDate,
+        startDate: new Date(),
+        completedDate: new Date(),
+        costPerUnit,
+        notes: data.notes,
+        createdBy: data.createdBy
+      }
+    })
+
+    // 4. Record Stock Movements (Deduct Raw Materials)
+    for (const bom of bomItems) {
+      const requiredQty = bom.quantity * data.quantity
+      await this.recordStockMovement({
+        productId: bom.rawMaterialId,
+        type: 'out',
+        quantity: requiredQty,
+        reference: orderNumber,
+        reason: 'production',
+        performedBy: data.createdBy
+      })
+    }
+
+    // 5. Record Stock Movement (Add Finished Good)
+    await this.recordStockMovement({
+      productId: data.productId,
+      type: 'in',
+      quantity: data.quantity,
+      unitPrice: costPerUnit,
+      reference: orderNumber,
+      reason: 'production',
+      batchNumber: data.batchNumber,
+      expiryDate: data.expiryDate,
+      performedBy: data.createdBy
+    })
+
+    return order
   }
 }
