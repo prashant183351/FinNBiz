@@ -243,7 +243,7 @@ export default function LoginPage() {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => setIsRecovering(true)}
+                    onClick={() => { setIsRecovering(true); clearError(); }}
                     className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors text-left"
                   >
                     Forgot Email?
@@ -252,7 +252,7 @@ export default function LoginPage() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setIsUpdating(true)}
+                  onClick={() => { setIsUpdating(true); clearError(); }}
                   className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors text-left"
                 >
                   Forgot Password?
