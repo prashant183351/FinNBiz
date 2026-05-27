@@ -209,7 +209,7 @@ export default function LoginPage() {
         )}
 
         {error && !updateSuccess && !recoveredEmail && (
-          <div className="p-3 mb-6 bg-red-950/40 border border-red-800/60 text-red-300 text-xs rounded-lg flex items-center gap-2 animate-shake justify-between">
+          <div className="p-3 mb-6 bg-red-950/40 border border-red-800/60 text-red-300 text-xs rounded-lg flex flex-col gap-3 animate-shake">
             <div className="flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -230,6 +230,34 @@ export default function LoginPage() {
                   ? t("error.user_not_found")
                   : t("error.login_failed")}
               </span>
+            </div>
+            
+            <div className="flex gap-4 border-t border-red-800/30 pt-2 pl-7 font-semibold">
+              {error === "user_not_found" ? (
+                <Link
+                  href="/register"
+                  className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors"
+                >
+                  Create an account
+                </Link>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsRecovering(true)}
+                    className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors text-left"
+                  >
+                    Forgot Email?
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsUpdating(true)}
+                    className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors text-left"
+                  >
+                    Forgot Password?
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -261,20 +289,9 @@ export default function LoginPage() {
             <>
               {/* Email Input */}
               <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                    {t("field.email")}
-                  </label>
-                  {!isUpdating && (
-                    <button
-                      type="button"
-                      onClick={() => setIsRecovering(true)}
-                      className="text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors"
-                    >
-                      Forgot Email?
-                    </button>
-                  )}
-                </div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  {t("field.email")}
+                </label>
                 <div className="relative">
                   <input
                     type="email"
@@ -297,20 +314,9 @@ export default function LoginPage() {
 
               {/* Password Input */}
               <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                    {t("field.password")}
-                  </label>
-                  {!isUpdating && (
-                    <button
-                      type="button"
-                      onClick={() => setIsUpdating(true)}
-                      className="text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors"
-                    >
-                      {t("auth.login.forgot_password")}
-                    </button>
-                  )}
-                </div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  {t("field.password")}
+                </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
