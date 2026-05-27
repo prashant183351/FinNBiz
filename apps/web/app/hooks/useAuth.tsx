@@ -45,9 +45,18 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const isLocal =
   typeof window !== "undefined" && window.location.hostname === "localhost";
-export const API_BASE_URL =
+
+let rawApiUrl =
   process.env.NEXT_PUBLIC_API_URL ||
   (isLocal ? "http://localhost:3001/api" : "https://finnbiz.onrender.com/api");
+
+// Clean up the URL to prevent double slashes and missing /api path
+rawApiUrl = rawApiUrl.replace(/\/+$/, "");
+if (rawApiUrl.includes("finnbiz.onrender.com") && !rawApiUrl.endsWith("/api")) {
+  rawApiUrl += "/api";
+}
+
+export const API_BASE_URL = rawApiUrl;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
