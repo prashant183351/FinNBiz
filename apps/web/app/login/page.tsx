@@ -180,15 +180,6 @@ export default function LoginPage() {
                   : t("error.login_failed")}
               </span>
             </div>
-            {error !== "user_not_found" && !isUpdating && (
-              <button
-                type="button"
-                onClick={() => setIsUpdating(true)}
-                className="text-xs font-bold text-brand-400 hover:text-brand-300 underline"
-              >
-                Update?
-              </button>
-            )}
           </div>
         )}
 
@@ -218,9 +209,20 @@ export default function LoginPage() {
 
           {/* Password Input */}
           <div className="space-y-1">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-              {t("field.password")}
-            </label>
+            <div className="flex justify-between items-center">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                {t("field.password")}
+              </label>
+              {!isUpdating && (
+                <button
+                  type="button"
+                  onClick={() => setIsUpdating(true)}
+                  className="text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors"
+                >
+                  {t("auth.login.forgot_password")}
+                </button>
+              )}
+            </div>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
