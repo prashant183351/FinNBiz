@@ -14,47 +14,17 @@ Browserslist: caniuse-lite is outdated. Please run:
   Why you should do it regularly: https://github.com/browserslist/update-db#readme
  ✓ Compiled successfully
    Linting and checking validity of types ...
-   Collecting page data ...
-   Generating static pages (0/28) ...
-   Generating static pages (7/28) 
-   Generating static pages (14/28) 
-   Generating static pages (21/28) 
- ✓ Generating static pages (28/28)
-   Finalizing page optimization ...
-   Collecting build traces ...
+Failed to compile.
 
-Route (app)                              Size     First Load JS
-┌ ○ /                                    175 B          96.2 kB
-├ ○ /_not-found                          871 B          88.2 kB
-├ ○ /company-setup                       8.29 kB        95.6 kB
-├ ○ /dashboard                           9.32 kB         105 kB
-├ ○ /dashboard/expenses                  6.09 kB         110 kB
-├ ○ /dashboard/hr                        3.14 kB        99.1 kB
-├ ○ /dashboard/hr/employees              3.19 kB        99.2 kB
-├ ○ /dashboard/hr/payroll                3.47 kB        99.4 kB
-├ ○ /dashboard/hr/payslip                3.42 kB         103 kB
-├ ○ /dashboard/inventory                 10 kB           117 kB
-├ ○ /dashboard/invoices                  3.97 kB         108 kB
-├ ○ /dashboard/invoices/new              5.9 kB          110 kB
-├ ○ /dashboard/invoices/view             8.13 kB         115 kB
-├ ○ /dashboard/journal                   3.7 kB          108 kB
-├ ○ /dashboard/purchases/bills           8.28 kB        95.6 kB
-├ ○ /dashboard/purchases/tds             7.03 kB        94.3 kB
-├ ○ /dashboard/purchases/vendors         7.36 kB        94.7 kB
-├ ○ /dashboard/reports                   9.41 kB         109 kB
-├ ○ /dashboard/reports/gstr1             3.82 kB        99.8 kB
-├ ○ /dashboard/reports/gstr3b            3.65 kB         103 kB
-├ ○ /dashboard/settings/audit            6.9 kB         94.2 kB
-├ ○ /dashboard/settings/profile          7.05 kB        94.3 kB
-├ ○ /dashboard/settings/users            7.74 kB          95 kB
-├ ○ /dashboard/upi                       3.95 kB         108 kB
-├ ○ /login                               7.97 kB         104 kB
-└ ○ /register                            7.93 kB         104 kB
-+ First Load JS shared by all            87.3 kB
-  ├ chunks/1489ca71-b5f4843bddafdfb4.js  53.6 kB
-  ├ chunks/899-1070b9ab6fa0380c.js       31.7 kB
-  └ other shared chunks (total)          1.96 kB
+./app/login/page.tsx:479:23
+Type error: Cannot find name 'loading'.
 
-
-○  (Static)  prerendered as static content
-
+[0m [90m 477 |[39m           [33m<[39m[33mbutton[39m[0m
+[0m [90m 478 |[39m             type[33m=[39m[32m"submit"[39m[0m
+[0m[31m[1m>[22m[39m[90m 479 |[39m             disabled[33m=[39m{loading}[0m
+[0m [90m     |[39m                       [31m[1m^[22m[39m[0m
+[0m [90m 480 |[39m             className[33m=[39m[32m"w-full py-3.5 bg-brand-500 hover:bg-brand-400 text-black font-extrabold rounded-xl text-sm transition-all duration-300 shadow-[0_0_20px_-5px_rgba(141,198,63,0.5)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"[39m[0m
+[0m [90m 481 |[39m           [33m>[39m[0m
+[0m [90m 482 |[39m             {loading [33m?[39m ([0m
+Next.js build worker exited with code: 1 and signal: null
+ ELIFECYCLE  Command failed with exit code 1.

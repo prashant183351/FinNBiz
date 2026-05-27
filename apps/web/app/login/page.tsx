@@ -12,6 +12,7 @@ export default function LoginPage() {
     user,
     companies,
     error,
+    loading,
     clearError,
     updateCredentials,
     sendOtp,
