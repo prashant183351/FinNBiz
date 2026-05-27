@@ -7,8 +7,16 @@ import { useAuth } from "../hooks/useAuth";
 import { useI18n } from "../hooks/useI18n";
 
 export default function LoginPage() {
-export default function LoginPage() {
-  const { login, user, companies, error, loading, clearError, updateCredentials, recoverEmail } = useAuth();
+  const {
+    login,
+    user,
+    companies,
+    error,
+    loading,
+    clearError,
+    updateCredentials,
+    recoverEmail,
+  } = useAuth();
   const { t, language, setLanguage } = useI18n();
   const router = useRouter();
 
@@ -94,7 +102,11 @@ export default function LoginPage() {
 
     if (isUpdating) {
       if (!validateUpdate()) return;
-      const success = await updateCredentials(email, newEmail || undefined, newPassword || undefined);
+      const success = await updateCredentials(
+        email,
+        newEmail || undefined,
+        newPassword || undefined,
+      );
       if (success) {
         setUpdateSuccess(true);
         // Login with new credentials or old if not updated
@@ -163,10 +175,18 @@ export default function LoginPage() {
 
         <div className="mb-6">
           <h2 className="text-2xl font-bold tracking-tight text-white">
-            {isRecovering ? "Find Your Account" : isUpdating ? t("auth.login.update_title") : t("auth.login.title")}
+            {isRecovering
+              ? "Find Your Account"
+              : isUpdating
+                ? t("auth.login.update_title")
+                : t("auth.login.title")}
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            {isRecovering ? "Enter your registered name to find your email" : isUpdating ? t("auth.login.update_subtitle") : t("auth.login.subtitle")}
+            {isRecovering
+              ? "Enter your registered name to find your email"
+              : isUpdating
+                ? t("auth.login.update_subtitle")
+                : t("auth.login.subtitle")}
           </p>
         </div>
 
@@ -175,11 +195,16 @@ export default function LoginPage() {
             <span>{t("auth.login.update_success")}</span>
           </div>
         )}
-        
+
         {recoveredEmail && (
           <div className="p-3 mb-6 bg-green-950/40 border border-green-800/60 text-green-300 text-xs rounded-lg flex flex-col gap-1">
             <span className="font-semibold text-white">Account Found!</span>
-            <span>Your Email: <strong className="text-brand-300 select-all">{recoveredEmail}</strong></span>
+            <span>
+              Your Email:{" "}
+              <strong className="text-brand-300 select-all">
+                {recoveredEmail}
+              </strong>
+            </span>
           </div>
         )}
 
@@ -264,128 +289,136 @@ export default function LoginPage() {
                   />
                 </div>
                 {fieldErrors.email && (
-                  <p className="text-[11px] text-red-400">{fieldErrors.email}</p>
+                  <p className="text-[11px] text-red-400">
+                    {fieldErrors.email}
+                  </p>
                 )}
               </div>
 
-          {/* Password Input */}
-          <div className="space-y-1">
-            <div className="flex justify-between items-center">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                {t("field.password")}
-              </label>
-              {!isUpdating && (
-                <button
-                  type="button"
-                  onClick={() => setIsUpdating(true)}
-                  className="text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors"
-                >
-                  {t("auth.login.forgot_password")}
-                </button>
-              )}
-            </div>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t("field.password.placeholder")}
-                className={`w-full px-4 py-3 pr-10 bg-black/50 border rounded-xl text-sm placeholder-slate-600 text-slate-100 outline-none transition-all duration-300 ${
-                  fieldErrors.password
-                    ? "border-red-500/80 focus:ring-1 focus:ring-red-500"
-                    : "border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300"
-              >
-                {showPassword ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
-            {fieldErrors.password && (
-              <p className="text-[11px] text-red-400">{fieldErrors.password}</p>
-            )}
-          </div>
-
-          {isUpdating && (
-            <>
-              <div className="space-y-1 mt-4">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  New {t("field.email")} (Optional)
-                </label>
-                <input
-                  type="email"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  placeholder="Leave blank to keep same"
-                  className={`w-full px-4 py-3 bg-black/50 border rounded-xl text-sm placeholder-slate-600 text-slate-100 outline-none transition-all duration-300 ${
-                    fieldErrors.newEmail
-                      ? "border-red-500/80 focus:ring-1 focus:ring-red-500"
-                      : "border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
-                  }`}
-                />
-                {fieldErrors.newEmail && (
-                  <p className="text-[11px] text-red-400">{fieldErrors.newEmail}</p>
-                )}
-              </div>
+              {/* Password Input */}
               <div className="space-y-1">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  New {t("field.password")} (Optional)
-                </label>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Leave blank to keep same"
-                  className={`w-full px-4 py-3 bg-black/50 border rounded-xl text-sm placeholder-slate-600 text-slate-100 outline-none transition-all duration-300 ${
-                    fieldErrors.newPassword
-                      ? "border-red-500/80 focus:ring-1 focus:ring-red-500"
-                      : "border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
-                  }`}
-                />
-                {fieldErrors.newPassword && (
-                  <p className="text-[11px] text-red-400">{fieldErrors.newPassword}</p>
+                <div className="flex justify-between items-center">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    {t("field.password")}
+                  </label>
+                  {!isUpdating && (
+                    <button
+                      type="button"
+                      onClick={() => setIsUpdating(true)}
+                      className="text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors"
+                    >
+                      {t("auth.login.forgot_password")}
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={t("field.password.placeholder")}
+                    className={`w-full px-4 py-3 pr-10 bg-black/50 border rounded-xl text-sm placeholder-slate-600 text-slate-100 outline-none transition-all duration-300 ${
+                      fieldErrors.password
+                        ? "border-red-500/80 focus:ring-1 focus:ring-red-500"
+                        : "border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300"
+                  >
+                    {showPassword ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-5 h-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-5 h-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {fieldErrors.password && (
+                  <p className="text-[11px] text-red-400">
+                    {fieldErrors.password}
+                  </p>
                 )}
               </div>
-            </>
-          )}
+
+              {isUpdating && (
+                <>
+                  <div className="space-y-1 mt-4">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      New {t("field.email")} (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="Leave blank to keep same"
+                      className={`w-full px-4 py-3 bg-black/50 border rounded-xl text-sm placeholder-slate-600 text-slate-100 outline-none transition-all duration-300 ${
+                        fieldErrors.newEmail
+                          ? "border-red-500/80 focus:ring-1 focus:ring-red-500"
+                          : "border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                      }`}
+                    />
+                    {fieldErrors.newEmail && (
+                      <p className="text-[11px] text-red-400">
+                        {fieldErrors.newEmail}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      New {t("field.password")} (Optional)
+                    </label>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Leave blank to keep same"
+                      className={`w-full px-4 py-3 bg-black/50 border rounded-xl text-sm placeholder-slate-600 text-slate-100 outline-none transition-all duration-300 ${
+                        fieldErrors.newPassword
+                          ? "border-red-500/80 focus:ring-1 focus:ring-red-500"
+                          : "border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                      }`}
+                    />
+                    {fieldErrors.newPassword && (
+                      <p className="text-[11px] text-red-400">
+                        {fieldErrors.newPassword}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </>
           )}
 
@@ -401,7 +434,13 @@ export default function LoginPage() {
                 <span>Loading...</span>
               </React.Fragment>
             ) : (
-              <span>{isRecovering ? "Find Account" : isUpdating ? t("auth.login.update_btn") : t("auth.login.btn")}</span>
+              <span>
+                {isRecovering
+                  ? "Find Account"
+                  : isUpdating
+                    ? t("auth.login.update_btn")
+                    : t("auth.login.btn")}
+              </span>
             )}
           </button>
 
