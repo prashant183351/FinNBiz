@@ -40,6 +40,7 @@ export default function LoginPage() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   useEffect(() => {
     clearError();
@@ -242,7 +243,9 @@ export default function LoginPage() {
               <span>
                 {error === "user_not_found"
                   ? t("error.user_not_found")
-                  : t("error.login_failed")}
+                  : error === "Invalid email or password"
+                    ? t("error.login_failed")
+                    : error}
               </span>
             </div>
             
@@ -266,21 +269,24 @@ export default function LoginPage() {
               ) : (
                 <button
                   type="button"
+                  disabled={isSendingOtp}
                   onClick={async () => { 
                     if (!email) {
                       setFieldErrors({ email: t("error.required") });
                       return;
                     }
+                    setIsSendingOtp(true);
                     const sent = await sendOtp(email);
+                    setIsSendingOtp(false);
                     if (sent) {
                       setOtpSent(true);
                       setIsUpdating(true);
                       clearError();
                     }
                   }}
-                  className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors text-left"
+                  className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors text-left disabled:opacity-50"
                 >
-                  Forgot Password?
+                  {isSendingOtp ? "Sending..." : "Forgot Password?"}
                 </button>
               )}
             </div>
