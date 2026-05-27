@@ -12,9 +12,9 @@ export default function LoginPage() {
     user,
     companies,
     error,
-    loading,
     clearError,
     updateCredentials,
+    sendOtp,
     recoverEmail,
   } = useAuth();
   const { t, language, setLanguage } = useI18n();
@@ -28,8 +28,11 @@ export default function LoginPage() {
     password?: string;
     newEmail?: string;
     newPassword?: string;
+    otp?: string;
   }>({});
   const [isUpdating, setIsUpdating] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
   const [isRecovering, setIsRecovering] = useState(false);
   const [recoveryName, setRecoveryName] = useState("");
   const [recoveredEmail, setRecoveredEmail] = useState<string | null>(null);
@@ -101,9 +104,19 @@ export default function LoginPage() {
     }
 
     if (isUpdating) {
+      if (!otpSent) {
+        // Should not happen as we send OTP before entering this mode now,
+        // but just in case
+        return;
+      }
+      if (!otp) {
+        setFieldErrors({ otp: "OTP is required" });
+        return;
+      }
       if (!validateUpdate()) return;
       const success = await updateCredentials(
         email,
+        otp,
         newEmail || undefined,
         newPassword || undefined,
       );
@@ -252,7 +265,18 @@ export default function LoginPage() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => { setIsUpdating(true); clearError(); }}
+                  onClick={async () => { 
+                    if (!email) {
+                      setFieldErrors({ email: t("error.required") });
+                      return;
+                    }
+                    const sent = await sendOtp(email);
+                    if (sent) {
+                      setOtpSent(true);
+                      setIsUpdating(true);
+                      clearError();
+                    }
+                  }}
                   className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors text-left"
                 >
                   Forgot Password?
@@ -383,6 +407,27 @@ export default function LoginPage() {
                 <>
                   <div className="space-y-1 mt-4">
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      Enter OTP Code *
+                    </label>
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder="6-digit code sent to your email"
+                      className={`w-full px-4 py-3 bg-black/50 border rounded-xl text-sm placeholder-slate-600 text-slate-100 outline-none transition-all duration-300 ${
+                        fieldErrors.otp
+                          ? "border-red-500/80 focus:ring-1 focus:ring-red-500"
+                          : "border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                      }`}
+                    />
+                    {fieldErrors.otp && (
+                      <p className="text-[11px] text-red-400">
+                        {fieldErrors.otp}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1 mt-4">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
                       New {t("field.email")} (Optional)
                     </label>
                     <input
@@ -455,6 +500,8 @@ export default function LoginPage() {
               type="button"
               onClick={() => {
                 setIsUpdating(false);
+                setOtpSent(false);
+                setOtp("");
                 setIsRecovering(false);
                 setRecoveredEmail(null);
                 setRecoveryName("");

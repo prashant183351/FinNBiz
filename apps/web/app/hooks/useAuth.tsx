@@ -35,7 +35,8 @@ interface AuthContextProps {
     address?: string,
   ) => Promise<boolean>;
   setActiveCompany: (company: Company) => void;
-  updateCredentials: (email: string, newEmail?: string, newPassword?: string) => Promise<boolean>;
+  updateCredentials: (email: string, otp: string, newEmail?: string, newPassword?: string) => Promise<boolean>;
+  sendOtp: (email: string) => Promise<boolean>;
   recoverEmail: (name: string) => Promise<string | null>;
   clearError: () => void;
 }
@@ -284,14 +285,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem("finnbiz_active_company", JSON.stringify(company));
   };
 
-  const updateCredentials = async (email: string, newEmail?: string, newPassword?: string): Promise<boolean> => {
+  const updateCredentials = async (email: string, otp: string, newEmail?: string, newPassword?: string): Promise<boolean> => {
     setError(null)
     setLoading(true)
     try {
       const res = await fetch(`${API_BASE_URL}/auth/update`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, newEmail, newPassword }),
+        body: JSON.stringify({ email, otp, newEmail, newPassword }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to update credentials')
@@ -324,6 +325,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }
 
+  const sendOtp = async (email: string): Promise<boolean> => {
+    setError(null)
+    setLoading(true)
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send OTP')
+      setLoading(false)
+      return true
+    } catch (err: any) {
+      setError(err.message || 'Failed to send OTP')
+      setLoading(false)
+      return false
+    }
+  }
+
   const clearError = () => setError(null);
 
   return (
@@ -341,6 +362,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         createCompany,
         setActiveCompany,
         updateCredentials,
+        sendOtp,
         recoverEmail,
         clearError,
       }}

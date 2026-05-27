@@ -5,6 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { authenticateToken } from "../middleware/auth";
 import { TwoFactorService } from "../services/twoFactor.service";
 import { AuditService } from "../services/audit.service";
+import { sendMail } from "../services/mail.service";
 
 const router: Router = Router();
 const prisma = new PrismaClient();
@@ -133,13 +134,54 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// PUT /api/auth/update - Update email and/or password
+// POST /api/auth/forgot-password - Generate and send OTP
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ error: 'user_not_found' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = new Date();
+    expiry.setMinutes(expiry.getMinutes() + 10); // 10 minutes expiry
+
+    await prisma.user.update({
+      where: { email },
+      data: { resetOtp: otp, resetOtpExpiry: expiry },
+    });
+
+    // Send email using Brevo/Nodemailer
+    const html = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Password Reset Request</h2>
+        <p>You requested to reset your password for FinNBiz.</p>
+        <p>Your OTP code is: <strong style="font-size: 24px; color: #4F46E5;">${otp}</strong></p>
+        <p>This code is valid for 10 minutes. If you did not request this, please ignore this email.</p>
+      </div>
+    `;
+    await sendMail(email, 'Your FinNBiz Password Reset Code', html);
+
+    res.json({ message: 'OTP sent to email' });
+  } catch (error) {
+    console.error('Error in forgot-password:', error);
+    res.status(500).json({ error: 'Failed to process request' });
+  }
+});
+
+// PUT /api/auth/update - Update email and/or password with OTP
 router.put('/update', async (req, res) => {
   try {
-    const { email, newEmail, newPassword } = req.body
+    const { email, otp, newEmail, newPassword } = req.body
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' })
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP are required' })
     }
 
     const user = await prisma.user.findUnique({
@@ -150,7 +192,18 @@ router.put('/update', async (req, res) => {
       return res.status(404).json({ error: 'user_not_found' })
     }
 
-    const updateData: any = {}
+    // Verify OTP
+    if (!user.resetOtp || user.resetOtp !== otp) {
+      return res.status(400).json({ error: 'Invalid OTP' });
+    }
+    if (!user.resetOtpExpiry || user.resetOtpExpiry < new Date()) {
+      return res.status(400).json({ error: 'OTP has expired' });
+    }
+
+    const updateData: any = {
+      resetOtp: null,
+      resetOtpExpiry: null,
+    }
     if (newEmail) updateData.email = newEmail
     if (newPassword) updateData.password = await bcrypt.hash(newPassword, 12)
 
