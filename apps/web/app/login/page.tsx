@@ -234,14 +234,13 @@ export default function LoginPage() {
             
             <div className="flex gap-4 border-t border-red-800/30 pt-2 pl-7 font-semibold">
               {error === "user_not_found" ? (
-                <Link
-                  href="/register"
-                  className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors"
-                >
-                  Create an account
-                </Link>
-              ) : (
                 <>
+                  <Link
+                    href="/register"
+                    className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors"
+                  >
+                    Create an account
+                  </Link>
                   <button
                     type="button"
                     onClick={() => setIsRecovering(true)}
@@ -249,14 +248,15 @@ export default function LoginPage() {
                   >
                     Forgot Email?
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsUpdating(true)}
-                    className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors text-left"
-                  >
-                    Forgot Password?
-                  </button>
                 </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsUpdating(true)}
+                  className="text-red-400 hover:text-red-300 underline decoration-dotted transition-colors text-left"
+                >
+                  Forgot Password?
+                </button>
               )}
             </div>
           </div>
