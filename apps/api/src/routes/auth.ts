@@ -166,6 +166,31 @@ router.put('/update', async (req, res) => {
   }
 })
 
+// POST /api/auth/recover-email - Recover email by name
+router.post('/recover-email', async (req, res) => {
+  try {
+    const { name } = req.body
+
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' })
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
+      select: { email: true }
+    })
+
+    if (!user) {
+      return res.status(404).json({ error: 'No account found with this name' })
+    }
+
+    res.json({ email: user.email })
+  } catch (error) {
+    console.error('Error recovering email:', error)
+    res.status(500).json({ error: 'Failed to recover email' })
+  }
+})
+
 // POST /api/auth/refresh - Refresh access token
 router.post("/refresh", async (req, res) => {
   try {

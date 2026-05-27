@@ -36,6 +36,7 @@ interface AuthContextProps {
   ) => Promise<boolean>;
   setActiveCompany: (company: Company) => void;
   updateCredentials: (email: string, newEmail?: string, newPassword?: string) => Promise<boolean>;
+  recoverEmail: (name: string) => Promise<string | null>;
   clearError: () => void;
 }
 
@@ -303,6 +304,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }
 
+  const recoverEmail = async (name: string): Promise<string | null> => {
+    setError(null)
+    setLoading(true)
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/recover-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to recover email')
+      setLoading(false)
+      return data.email
+    } catch (err: any) {
+      setError(err.message || 'Recovery failed')
+      setLoading(false)
+      return null
+    }
+  }
+
   const clearError = () => setError(null);
 
   return (
@@ -320,6 +341,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         createCompany,
         setActiveCompany,
         updateCredentials,
+        recoverEmail,
         clearError,
       }}
     >

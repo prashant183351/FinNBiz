@@ -7,7 +7,8 @@ import { useAuth } from "../hooks/useAuth";
 import { useI18n } from "../hooks/useI18n";
 
 export default function LoginPage() {
-  const { login, user, companies, error, loading, clearError, updateCredentials } = useAuth();
+export default function LoginPage() {
+  const { login, user, companies, error, loading, clearError, updateCredentials, recoverEmail } = useAuth();
   const { t, language, setLanguage } = useI18n();
   const router = useRouter();
 
@@ -21,6 +22,9 @@ export default function LoginPage() {
     newPassword?: string;
   }>({});
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [recoveryName, setRecoveryName] = useState("");
+  const [recoveredEmail, setRecoveredEmail] = useState<string | null>(null);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [updateSuccess, setUpdateSuccess] = useState(false);
@@ -72,6 +76,21 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isRecovering) {
+      if (!recoveryName.trim()) {
+        setFieldErrors({ email: "Please enter your registered name" });
+        return;
+      }
+      const emailFound = await recoverEmail(recoveryName);
+      if (emailFound) {
+        setRecoveredEmail(emailFound);
+        setEmail(emailFound);
+        // Show the email and allow them to login
+        setTimeout(() => setIsRecovering(false), 3000);
+      }
+      return;
+    }
 
     if (isUpdating) {
       if (!validateUpdate()) return;
@@ -144,10 +163,10 @@ export default function LoginPage() {
 
         <div className="mb-6">
           <h2 className="text-2xl font-bold tracking-tight text-white">
-            {isUpdating ? t("auth.login.update_title") : t("auth.login.title")}
+            {isRecovering ? "Find Your Account" : isUpdating ? t("auth.login.update_title") : t("auth.login.title")}
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            {isUpdating ? t("auth.login.update_subtitle") : t("auth.login.subtitle")}
+            {isRecovering ? "Enter your registered name to find your email" : isUpdating ? t("auth.login.update_subtitle") : t("auth.login.subtitle")}
           </p>
         </div>
 
@@ -156,8 +175,15 @@ export default function LoginPage() {
             <span>{t("auth.login.update_success")}</span>
           </div>
         )}
+        
+        {recoveredEmail && (
+          <div className="p-3 mb-6 bg-green-950/40 border border-green-800/60 text-green-300 text-xs rounded-lg flex flex-col gap-1">
+            <span className="font-semibold text-white">Account Found!</span>
+            <span>Your Email: <strong className="text-brand-300 select-all">{recoveredEmail}</strong></span>
+          </div>
+        )}
 
-        {error && !updateSuccess && (
+        {error && !updateSuccess && !recoveredEmail && (
           <div className="p-3 mb-6 bg-red-950/40 border border-red-800/60 text-red-300 text-xs rounded-lg flex items-center gap-2 animate-shake justify-between">
             <div className="flex items-center gap-2">
               <svg
@@ -184,28 +210,63 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Email Input */}
-          <div className="space-y-1">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-              {t("field.email")}
-            </label>
-            <div className="relative">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t("field.email.placeholder")}
-                className={`w-full px-4 py-3 bg-black/50 border rounded-xl text-sm placeholder-slate-600 text-slate-100 outline-none transition-all duration-300 ${
-                  fieldErrors.email
-                    ? "border-red-500/80 focus:ring-1 focus:ring-red-500"
-                    : "border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
-                }`}
-              />
+          {isRecovering ? (
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                Registered Full Name
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={recoveryName}
+                  onChange={(e) => setRecoveryName(e.target.value)}
+                  placeholder="e.g. John Doe"
+                  className={`w-full px-4 py-3 bg-black/50 border rounded-xl text-sm placeholder-slate-600 text-slate-100 outline-none transition-all duration-300 ${
+                    fieldErrors.email
+                      ? "border-red-500/80 focus:ring-1 focus:ring-red-500"
+                      : "border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                  }`}
+                />
+              </div>
+              {fieldErrors.email && (
+                <p className="text-[11px] text-red-400">{fieldErrors.email}</p>
+              )}
             </div>
-            {fieldErrors.email && (
-              <p className="text-[11px] text-red-400">{fieldErrors.email}</p>
-            )}
-          </div>
+          ) : (
+            <>
+              {/* Email Input */}
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    {t("field.email")}
+                  </label>
+                  {!isUpdating && (
+                    <button
+                      type="button"
+                      onClick={() => setIsRecovering(true)}
+                      className="text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors"
+                    >
+                      Forgot Email?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t("field.email.placeholder")}
+                    className={`w-full px-4 py-3 bg-black/50 border rounded-xl text-sm placeholder-slate-600 text-slate-100 outline-none transition-all duration-300 ${
+                      fieldErrors.email
+                        ? "border-red-500/80 focus:ring-1 focus:ring-red-500"
+                        : "border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                    }`}
+                  />
+                </div>
+                {fieldErrors.email && (
+                  <p className="text-[11px] text-red-400">{fieldErrors.email}</p>
+                )}
+              </div>
 
           {/* Password Input */}
           <div className="space-y-1">
@@ -325,6 +386,8 @@ export default function LoginPage() {
               </div>
             </>
           )}
+            </>
+          )}
 
           {/* Submit Button */}
           <button
@@ -338,17 +401,22 @@ export default function LoginPage() {
                 <span>Loading...</span>
               </React.Fragment>
             ) : (
-              <span>{isUpdating ? t("auth.login.update_btn") : t("auth.login.btn")}</span>
+              <span>{isRecovering ? "Find Account" : isUpdating ? t("auth.login.update_btn") : t("auth.login.btn")}</span>
             )}
           </button>
 
-          {isUpdating && (
+          {(isUpdating || isRecovering) && (
             <button
               type="button"
-              onClick={() => setIsUpdating(false)}
+              onClick={() => {
+                setIsUpdating(false);
+                setIsRecovering(false);
+                setRecoveredEmail(null);
+                setRecoveryName("");
+              }}
               className="w-full py-2 bg-transparent text-slate-400 hover:text-slate-200 font-semibold rounded-xl text-xs transition-all duration-300"
             >
-              Cancel Update
+              Back to Login
             </button>
           )}
         </form>
