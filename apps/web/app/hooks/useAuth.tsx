@@ -328,8 +328,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const sendOtp = async (email: string): Promise<boolean> => {
     setError(null)
     setLoading(true)
+    const url = `${API_BASE_URL}/auth/forgot-password`;
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -339,7 +340,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setLoading(false)
       return true
     } catch (err: any) {
-      setError(err.message || 'Failed to send OTP')
+      if (err.message === "Failed to fetch") {
+         setError(`Network error: Could not reach API at ${url}`);
+      } else {
+         setError(err.message || 'Failed to send OTP')
+      }
       setLoading(false)
       return false
     }

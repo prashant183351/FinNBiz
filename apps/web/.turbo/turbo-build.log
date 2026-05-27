@@ -9,22 +9,60 @@
 Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
   npx update-browserslist-db@latest
   Why you should do it regularly: https://github.com/browserslist/update-db#readme
-Browserslist: caniuse-lite is outdated. Please run:
-  npx update-browserslist-db@latest
-  Why you should do it regularly: https://github.com/browserslist/update-db#readme
  ✓ Compiled successfully
    Linting and checking validity of types ...
-Failed to compile.
+   Collecting page data ...
+   Generating static pages (0/39) ...
+   Generating static pages (9/39) 
+   Generating static pages (19/39) 
+   Generating static pages (29/39) 
+ ✓ Generating static pages (39/39)
+   Finalizing page optimization ...
+   Collecting build traces ...
 
-./app/login/page.tsx:479:23
-Type error: Cannot find name 'loading'.
+Route (app)                              Size     First Load JS
+┌ ○ /                                    177 B          96.3 kB
+├ ○ /_not-found                          874 B          88.3 kB
+├ ○ /company-setup                       4.97 kB        99.5 kB
+├ ○ /dashboard                           6.11 kB         109 kB
+├ ○ /dashboard/analytics                 4.94 kB         108 kB
+├ ○ /dashboard/expenses                  6.89 kB         114 kB
+├ ○ /dashboard/hr                        4.19 kB         107 kB
+├ ○ /dashboard/hr/attendance             5.44 kB         109 kB
+├ ○ /dashboard/hr/employees              4.22 kB         107 kB
+├ ○ /dashboard/hr/payroll                5.72 kB         109 kB
+├ ○ /dashboard/hr/payslip                3.68 kB         103 kB
+├ ○ /dashboard/inventory                 10.3 kB         121 kB
+├ ○ /dashboard/inventory/production      5.01 kB         108 kB
+├ ○ /dashboard/inventory/stickers        5.11 kB         112 kB
+├ ○ /dashboard/inventory/warehouses      8.12 kB         111 kB
+├ ○ /dashboard/invoices                  4.87 kB         112 kB
+├ ○ /dashboard/invoices/new              6.81 kB         114 kB
+├ ○ /dashboard/invoices/reminders        6.17 kB         109 kB
+├ ○ /dashboard/invoices/view             8.14 kB         119 kB
+├ ○ /dashboard/journal                   4.52 kB         111 kB
+├ ○ /dashboard/purchases/bills           4.98 kB        99.5 kB
+├ ○ /dashboard/purchases/tds             3.72 kB        98.2 kB
+├ ○ /dashboard/purchases/vendors         4.14 kB        98.7 kB
+├ ○ /dashboard/reconciliation            4.45 kB         108 kB
+├ ○ /dashboard/reports                   5.48 kB         112 kB
+├ ○ /dashboard/reports/gstr1             4.85 kB         101 kB
+├ ○ /dashboard/reports/gstr2b            6.67 kB         110 kB
+├ ○ /dashboard/reports/gstr3b            3.9 kB          104 kB
+├ ○ /dashboard/settings/audit            3.68 kB        98.2 kB
+├ ○ /dashboard/settings/backup           5.62 kB         100 kB
+├ ○ /dashboard/settings/data-import      5.48 kB         100 kB
+├ ○ /dashboard/settings/profile          3.87 kB        98.4 kB
+├ ○ /dashboard/settings/users            4.55 kB        99.1 kB
+├ ○ /dashboard/subscription              5.42 kB         109 kB
+├ ○ /dashboard/upi                       4.76 kB         112 kB
+├ ○ /login                               5.63 kB         109 kB
+└ ○ /register                            4.64 kB         108 kB
++ First Load JS shared by all            87.4 kB
+  ├ chunks/1489ca71-9dac607e6716857e.js  53.6 kB
+  ├ chunks/1899-5fc5f25cc6df5293.js      31.8 kB
+  └ other shared chunks (total)          1.96 kB
 
-[0m [90m 477 |[39m           [33m<[39m[33mbutton[39m[0m
-[0m [90m 478 |[39m             type[33m=[39m[32m"submit"[39m[0m
-[0m[31m[1m>[22m[39m[90m 479 |[39m             disabled[33m=[39m{loading}[0m
-[0m [90m     |[39m                       [31m[1m^[22m[39m[0m
-[0m [90m 480 |[39m             className[33m=[39m[32m"w-full py-3.5 bg-brand-500 hover:bg-brand-400 text-black font-extrabold rounded-xl text-sm transition-all duration-300 shadow-[0_0_20px_-5px_rgba(141,198,63,0.5)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"[39m[0m
-[0m [90m 481 |[39m           [33m>[39m[0m
-[0m [90m 482 |[39m             {loading [33m?[39m ([0m
-Next.js build worker exited with code: 1 and signal: null
- ELIFECYCLE  Command failed with exit code 1.
+
+○  (Static)  prerendered as static content
+
